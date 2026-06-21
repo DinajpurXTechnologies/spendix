@@ -1,4 +1,4 @@
-const CACHE_NAME = 'spendix-v1.0.0';
+const CACHE_NAME = 'spendix-v2';
 const ASSETS = [
   '/',
   '/index.html',
