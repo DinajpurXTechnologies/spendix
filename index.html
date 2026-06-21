@@ -1,0 +1,1950 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+<meta name="theme-color" content="#1A73E8"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="SpendiX"/>
+<meta name="description" content="Spend Smart. Save More. Grow Better. - Smart Expense & Bill Tracker"/>
+<title>SpendiX – Smart Expense & Bill Tracker</title>
+<link rel="manifest" href="manifest.json"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<!-- Firebase -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged, updateProfile, updatePassword, deleteUser, EmailAuthProvider, reauthenticateWithCredential } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getDatabase, ref, set, get, push, update, remove, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { getStorage, ref as sRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
+
+// ── FIREBASE CONFIG ── Replace with your own project credentials ──
+const firebaseConfig = {
+  apiKey: "AIzaSyDEMO_REPLACE_WITH_YOUR_KEY",
+  authDomain: "spendix-app.firebaseapp.com",
+  databaseURL: "https://spendix-app-default-rtdb.firebaseio.com",
+  projectId: "spendix-app",
+  storageBucket: "spendix-app.appspot.com",
+  messagingSenderId: "123456789",
+  appId: "1:123456789:web:abcdef123456"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getDatabase(app);
+const storage = getStorage(app);
+const googleProvider = new GoogleAuthProvider();
+
+window._fb = { auth, db, storage, ref, set, get, push, update, remove, onValue, sRef,
+  uploadBytes, getDownloadURL, createUserWithEmailAndPassword, signInWithEmailAndPassword,
+  signInWithPopup, signOut, onAuthStateChanged, updateProfile, updatePassword, deleteUser,
+  GoogleAuthProvider, googleProvider, EmailAuthProvider, reauthenticateWithCredential };
+window.dispatchEvent(new Event('firebaseReady'));
+</script>
+<style>
+:root {
+  --md-primary: #1A73E8;
+  --md-primary-dark: #1557B0;
+  --md-primary-light: #4A9EF8;
+  --md-secondary: #34A853;
+  --md-error: #EA4335;
+  --md-warning: #FBBC04;
+  --md-surface: #1E1E2E;
+  --md-surface-variant: #2A2A3E;
+  --md-surface-card: #252538;
+  --md-on-surface: #E8E8F0;
+  --md-on-surface-variant: #A0A0B8;
+  --md-outline: #3A3A50;
+  --md-bg: #0F0F1A;
+  --md-bottom-nav: #1A1A2E;
+  --md-income: #34A853;
+  --md-expense: #EA4335;
+  --md-shadow: 0 4px 20px rgba(0,0,0,0.4);
+  --md-radius: 16px;
+  --md-radius-sm: 10px;
+  --md-radius-xl: 24px;
+  --font-display: 'Google Sans', 'Roboto', sans-serif;
+  --font-body: 'Roboto', sans-serif;
+  --nav-height: 72px;
+  --header-height: 60px;
+}
+[data-theme="light"] {
+  --md-surface: #FFFFFF;
+  --md-surface-variant: #F3F4F6;
+  --md-surface-card: #FFFFFF;
+  --md-on-surface: #1A1A2E;
+  --md-on-surface-variant: #5A5A78;
+  --md-outline: #D0D0E0;
+  --md-bg: #F0F2F8;
+  --md-bottom-nav: #FFFFFF;
+  --md-shadow: 0 4px 20px rgba(0,0,0,0.12);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;overflow:hidden;font-family:var(--font-body);background:var(--md-bg);color:var(--md-on-surface);transition:background .3s,color .3s;}
+body{display:flex;flex-direction:column;}
+button{font-family:var(--font-body);cursor:pointer;border:none;outline:none;}
+input,textarea,select{font-family:var(--font-body);outline:none;}
+a{text-decoration:none;color:var(--md-primary);}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--md-outline);border-radius:4px;}
+
+/* ── SPLASH ── */
+#splash{position:fixed;inset:0;z-index:9999;background:linear-gradient(145deg,#0F0F1A 0%,#1A1A3E 50%,#0F0F1A 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;}
+.splash-flag{font-size:60px;animation:flagWave 1.5s ease-in-out infinite;}
+@keyframes flagWave{0%,100%{transform:rotate(-5deg) scale(1);}50%{transform:rotate(5deg) scale(1.1);}}
+.splash-logo{display:flex;flex-direction:column;align-items:center;animation:splashFadeIn 0.8s ease forwards;}
+.splash-icon{width:90px;height:90px;background:linear-gradient(135deg,var(--md-primary),var(--md-primary-light));border-radius:24px;display:flex;align-items:center;justify-content:center;font-size:48px;box-shadow:0 12px 40px rgba(26,115,232,0.5);animation:splashScale 1s cubic-bezier(0.34,1.56,0.64,1) forwards;}
+@keyframes splashScale{0%{transform:scale(0);}100%{transform:scale(1);}}
+@keyframes splashFadeIn{0%{opacity:0;transform:translateY(20px);}100%{opacity:1;transform:translateY(0);}}
+.splash-name{font-family:var(--font-display);font-size:38px;font-weight:700;color:#fff;margin-top:12px;letter-spacing:-0.5px;}
+.splash-tagline{font-size:14px;color:#8888AA;margin-top:4px;letter-spacing:0.3px;}
+.splash-made{font-size:13px;color:#6666AA;margin-top:30px;}
+.splash-dev{font-size:12px;color:#5555AA;margin-top:4px;}
+.splash-bar{width:200px;height:3px;background:#2A2A4A;border-radius:3px;margin-top:24px;overflow:hidden;}
+.splash-progress{height:100%;background:linear-gradient(90deg,var(--md-primary),var(--md-primary-light));border-radius:3px;animation:splashLoad 3s linear forwards;}
+@keyframes splashLoad{0%{width:0%;}100%{width:100%;}}
+
+/* ── ONBOARDING ── */
+#onboarding{position:fixed;inset:0;z-index:9998;background:var(--md-bg);display:none;flex-direction:column;}
+.ob-slides{flex:1;overflow:hidden;position:relative;}
+.ob-slide{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 32px;opacity:0;transition:all .4s ease;transform:translateX(100%);}
+.ob-slide.active{opacity:1;transform:translateX(0);}
+.ob-slide.prev{transform:translateX(-100%);opacity:0;}
+.ob-illustration{width:200px;height:200px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:80px;margin-bottom:32px;}
+.ob-slide:nth-child(1) .ob-illustration{background:linear-gradient(135deg,#1A73E820,#1A73E840);}
+.ob-slide:nth-child(2) .ob-illustration{background:linear-gradient(135deg,#34A85320,#34A85340);}
+.ob-slide:nth-child(3) .ob-illustration{background:linear-gradient(135deg,#FBBC0420,#FBBC0440);}
+.ob-title{font-family:var(--font-display);font-size:28px;font-weight:700;color:var(--md-on-surface);text-align:center;margin-bottom:12px;}
+.ob-desc{font-size:16px;color:var(--md-on-surface-variant);text-align:center;line-height:1.6;}
+.ob-dots{display:flex;gap:8px;justify-content:center;padding:20px;}
+.ob-dot{width:8px;height:8px;border-radius:4px;background:var(--md-outline);transition:all .3s;}
+.ob-dot.active{width:24px;background:var(--md-primary);}
+.ob-actions{padding:20px 24px 36px;display:flex;gap:12px;}
+.ob-skip{flex:1;padding:14px;border:1.5px solid var(--md-outline);border-radius:var(--md-radius);color:var(--md-on-surface-variant);background:transparent;font-size:15px;font-weight:500;}
+.ob-next{flex:2;padding:14px;background:var(--md-primary);border-radius:var(--md-radius);color:#fff;font-size:15px;font-weight:600;box-shadow:0 4px 16px rgba(26,115,232,0.4);}
+
+/* ── AUTH ── */
+#auth-screen{position:fixed;inset:0;z-index:9997;background:var(--md-bg);display:none;flex-direction:column;overflow-y:auto;}
+.auth-header{padding:40px 24px 20px;background:linear-gradient(180deg,#1A1A3E 0%,var(--md-bg) 100%);}
+.auth-logo{display:flex;align-items:center;gap:12px;margin-bottom:8px;}
+.auth-logo-icon{width:48px;height:48px;background:linear-gradient(135deg,var(--md-primary),var(--md-primary-light));border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:26px;}
+.auth-logo-name{font-family:var(--font-display);font-size:26px;font-weight:700;color:#fff;}
+.auth-welcome{font-size:22px;font-weight:600;color:var(--md-on-surface);margin-bottom:4px;}
+.auth-sub{font-size:14px;color:var(--md-on-surface-variant);}
+.auth-tabs{display:flex;margin:0 24px;background:var(--md-surface-variant);border-radius:var(--md-radius-sm);padding:4px;}
+.auth-tab{flex:1;padding:10px;border-radius:8px;background:transparent;color:var(--md-on-surface-variant);font-size:14px;font-weight:500;transition:all .2s;}
+.auth-tab.active{background:var(--md-primary);color:#fff;box-shadow:0 2px 8px rgba(26,115,232,0.4);}
+.auth-form{padding:20px 24px;}
+.field-group{margin-bottom:16px;}
+.field-label{font-size:13px;color:var(--md-on-surface-variant);margin-bottom:6px;display:block;font-weight:500;}
+.field-input{width:100%;padding:14px 16px;background:var(--md-surface-variant);border:1.5px solid var(--md-outline);border-radius:var(--md-radius-sm);color:var(--md-on-surface);font-size:15px;transition:border-color .2s;}
+.field-input:focus{border-color:var(--md-primary);}
+.field-input::placeholder{color:var(--md-on-surface-variant);}
+.btn-primary{width:100%;padding:15px;background:linear-gradient(135deg,var(--md-primary),var(--md-primary-light));border-radius:var(--md-radius);color:#fff;font-size:16px;font-weight:600;box-shadow:0 4px 16px rgba(26,115,232,0.4);transition:transform .15s,box-shadow .15s;margin-bottom:12px;}
+.btn-primary:active{transform:scale(0.98);}
+.btn-google{width:100%;padding:14px;background:var(--md-surface-variant);border:1.5px solid var(--md-outline);border-radius:var(--md-radius);color:var(--md-on-surface);font-size:15px;font-weight:500;display:flex;align-items:center;justify-content:center;gap:10px;transition:background .2s;}
+.btn-google:active{background:var(--md-outline);}
+.auth-divider{display:flex;align-items:center;gap:12px;margin:16px 0;}
+.auth-divider span{color:var(--md-on-surface-variant);font-size:13px;}
+.auth-divider::before,.auth-divider::after{content:'';flex:1;height:1px;background:var(--md-outline);}
+.auth-error{padding:12px 14px;background:#EA433520;border:1px solid #EA433540;border-radius:var(--md-radius-sm);color:#EA4335;font-size:13px;margin-bottom:12px;display:none;}
+
+/* ── APP SHELL ── */
+#app{position:fixed;inset:0;display:none;flex-direction:column;}
+.app-header{height:var(--header-height);background:var(--md-surface);border-bottom:1px solid var(--md-outline);display:flex;align-items:center;padding:0 16px;gap:12px;position:relative;z-index:100;flex-shrink:0;}
+.app-header-title{font-family:var(--font-display);font-size:20px;font-weight:600;color:var(--md-on-surface);flex:1;}
+.header-action{width:40px;height:40px;border-radius:50%;background:transparent;color:var(--md-on-surface-variant);display:flex;align-items:center;justify-content:center;font-size:20px;transition:background .15s;}
+.header-action:active{background:var(--md-outline);}
+.header-avatar{width:36px;height:36px;border-radius:50%;background:var(--md-primary);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600;color:#fff;cursor:pointer;overflow:hidden;flex-shrink:0;}
+.header-avatar img{width:100%;height:100%;object-fit:cover;}
+
+.pages{flex:1;overflow:hidden;position:relative;}
+.page{position:absolute;inset:0;overflow-y:auto;padding-bottom:calc(var(--nav-height) + 16px);display:none;animation:pageIn .25s ease;}
+.page.active{display:block;}
+@keyframes pageIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+
+/* ── BOTTOM NAV ── */
+.bottom-nav{height:var(--nav-height);background:var(--md-bottom-nav);border-top:1px solid var(--md-outline);display:flex;align-items:center;padding:0 4px;position:relative;z-index:100;flex-shrink:0;box-shadow:0 -4px 20px rgba(0,0,0,0.2);}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:8px 4px;cursor:pointer;position:relative;transition:color .2s;}
+.nav-item .nav-icon{font-size:22px;transition:transform .2s;}
+.nav-item .nav-label{font-size:11px;font-weight:500;color:var(--md-on-surface-variant);}
+.nav-item.active .nav-label{color:var(--md-primary);}
+.nav-item.active .nav-icon{transform:translateY(-2px);}
+.nav-badge{position:absolute;top:6px;right:calc(50% - 20px);background:var(--md-error);color:#fff;font-size:9px;font-weight:700;min-width:16px;height:16px;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 3px;}
+.nav-indicator{position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:32px;height:3px;background:var(--md-primary);border-radius:3px 3px 0 0;transition:all .3s;opacity:0;}
+.nav-item.active .nav-indicator{opacity:1;}
+
+/* ── CARDS ── */
+.card{background:var(--md-surface-card);border-radius:var(--md-radius);padding:16px;box-shadow:var(--md-shadow);border:1px solid var(--md-outline);}
+.card-lg{background:var(--md-surface-card);border-radius:var(--md-radius-xl);padding:20px;box-shadow:var(--md-shadow);border:1px solid var(--md-outline);}
+.section-title{font-family:var(--font-display);font-size:16px;font-weight:600;color:var(--md-on-surface);margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;}
+.section-link{font-size:13px;color:var(--md-primary);font-weight:500;}
+
+/* ── HOME PAGE ── */
+.home-page{padding:0;}
+.balance-hero{background:linear-gradient(135deg,#1A1A3E 0%,#1E2A5E 50%,#1A1A3E 100%);padding:20px 20px 36px;position:relative;overflow:hidden;}
+.balance-hero::before{content:'';position:absolute;top:-50px;right:-50px;width:200px;height:200px;border-radius:50%;background:rgba(26,115,232,0.15);}
+.balance-hero::after{content:'';position:absolute;bottom:-80px;left:-60px;width:250px;height:250px;border-radius:50%;background:rgba(26,115,232,0.1);}
+.balance-label{font-size:13px;color:#8888BB;letter-spacing:0.5px;position:relative;z-index:1;}
+.balance-amount{font-family:var(--font-display);font-size:38px;font-weight:700;color:#fff;margin:4px 0 2px;position:relative;z-index:1;}
+.balance-sub{font-size:13px;color:#6666AA;position:relative;z-index:1;}
+.balance-cards{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:0 16px;margin-top:-20px;}
+.stat-card{background:var(--md-surface-card);border-radius:var(--md-radius);padding:14px;box-shadow:var(--md-shadow);border:1px solid var(--md-outline);}
+.stat-card-label{font-size:12px;color:var(--md-on-surface-variant);margin-bottom:4px;display:flex;align-items:center;gap:4px;}
+.stat-card-val{font-family:var(--font-display);font-size:20px;font-weight:700;}
+.stat-card-val.income{color:var(--md-income);}
+.stat-card-val.expense{color:var(--md-expense);}
+.stat-card-val.savings{color:var(--md-primary);}
+.stat-card-val.bills{color:var(--md-warning);}
+.quick-actions{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:16px;}
+.qa-btn{background:var(--md-surface-card);border-radius:var(--md-radius);padding:14px 8px;display:flex;flex-direction:column;align-items:center;gap:6px;border:1px solid var(--md-outline);transition:transform .15s,box-shadow .15s;}
+.qa-btn:active{transform:scale(0.96);}
+.qa-icon{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;}
+.qa-label{font-size:12px;color:var(--md-on-surface-variant);font-weight:500;text-align:center;}
+
+/* ── TRANSACTION ITEM ── */
+.txn-item{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--md-outline);}
+.txn-item:last-child{border-bottom:none;}
+.txn-cat-icon{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+.txn-info{flex:1;min-width:0;}
+.txn-name{font-size:14px;font-weight:500;color:var(--md-on-surface);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.txn-meta{font-size:12px;color:var(--md-on-surface-variant);margin-top:2px;}
+.txn-amount{font-family:var(--font-display);font-size:15px;font-weight:600;flex-shrink:0;}
+.txn-amount.income{color:var(--md-income);}
+.txn-amount.expense{color:var(--md-expense);}
+
+/* ── FAB ── */
+.fab{position:fixed;bottom:calc(var(--nav-height) + 16px);right:20px;width:56px;height:56px;background:linear-gradient(135deg,var(--md-primary),var(--md-primary-light));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px;color:#fff;box-shadow:0 6px 20px rgba(26,115,232,0.5);z-index:500;transition:transform .2s,box-shadow .2s;}
+.fab:active{transform:scale(0.92);}
+.fab-menu{position:fixed;bottom:calc(var(--nav-height) + 84px);right:20px;display:flex;flex-direction:column;gap:10px;z-index:499;opacity:0;pointer-events:none;transition:opacity .2s;}
+.fab-menu.open{opacity:1;pointer-events:all;}
+.fab-item{display:flex;align-items:center;gap:10px;justify-content:flex-end;}
+.fab-item-label{background:var(--md-surface);padding:6px 12px;border-radius:var(--md-radius-sm);font-size:13px;font-weight:500;color:var(--md-on-surface);box-shadow:var(--md-shadow);white-space:nowrap;border:1px solid var(--md-outline);}
+.fab-item-btn{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;color:#fff;box-shadow:0 4px 12px rgba(0,0,0,0.3);}
+
+/* ── MODAL / BOTTOM SHEET ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:1000;opacity:0;pointer-events:none;transition:opacity .25s;backdrop-filter:blur(4px);}
+.modal-overlay.open{opacity:1;pointer-events:all;}
+.bottom-sheet{position:fixed;bottom:0;left:0;right:0;background:var(--md-surface);border-radius:24px 24px 0 0;z-index:1001;transform:translateY(100%);transition:transform .3s cubic-bezier(0.34,1.1,0.64,1);max-height:90vh;display:flex;flex-direction:column;}
+.bottom-sheet.open{transform:translateY(0);}
+.sheet-handle{width:36px;height:4px;background:var(--md-outline);border-radius:4px;margin:12px auto 0;}
+.sheet-header{padding:16px 20px 0;display:flex;align-items:center;justify-content:space-between;}
+.sheet-title{font-family:var(--font-display);font-size:18px;font-weight:600;color:var(--md-on-surface);}
+.sheet-close{width:36px;height:36px;border-radius:50%;background:var(--md-surface-variant);display:flex;align-items:center;justify-content:center;color:var(--md-on-surface-variant);font-size:18px;}
+.sheet-body{padding:16px 20px;overflow-y:auto;flex:1;}
+.type-toggle{display:flex;background:var(--md-surface-variant);border-radius:var(--md-radius-sm);padding:4px;margin-bottom:16px;}
+.type-btn{flex:1;padding:10px;border-radius:8px;background:transparent;color:var(--md-on-surface-variant);font-size:14px;font-weight:500;transition:all .2s;}
+.type-btn.active.expense{background:var(--md-expense);color:#fff;}
+.type-btn.active.income{background:var(--md-income);color:#fff;}
+.amount-field{text-align:center;margin-bottom:16px;}
+.amount-input{width:100%;font-size:36px;font-weight:700;font-family:var(--font-display);color:var(--md-on-surface);background:transparent;border:none;text-align:center;padding:12px 0;}
+.amount-input::placeholder{color:var(--md-outline);}
+.field-select{width:100%;padding:14px 16px;background:var(--md-surface-variant);border:1.5px solid var(--md-outline);border-radius:var(--md-radius-sm);color:var(--md-on-surface);font-size:15px;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24'%3E%3Cpath fill='%23888' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;}
+.field-select:focus{border-color:var(--md-primary);}
+.field-select option{background:var(--md-surface);}
+
+/* ── CATEGORY GRID ── */
+.cat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px;}
+.cat-chip{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 6px;border-radius:var(--md-radius-sm);background:var(--md-surface-variant);border:1.5px solid var(--md-outline);cursor:pointer;transition:all .2s;}
+.cat-chip.selected{border-color:var(--md-primary);background:#1A73E815;}
+.cat-chip span{font-size:20px;}
+.cat-chip small{font-size:10px;color:var(--md-on-surface-variant);text-align:center;}
+
+/* ── TRANSACTIONS PAGE ── */
+.search-bar{display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--md-surface-variant);border-bottom:1px solid var(--md-outline);}
+.search-input{flex:1;background:transparent;border:none;color:var(--md-on-surface);font-size:15px;}
+.search-input::placeholder{color:var(--md-on-surface-variant);}
+.filter-chips{display:flex;gap:8px;padding:12px 16px;overflow-x:auto;border-bottom:1px solid var(--md-outline);}
+.filter-chips::-webkit-scrollbar{height:0;}
+.f-chip{padding:6px 14px;border-radius:20px;background:var(--md-surface-variant);border:1.5px solid var(--md-outline);color:var(--md-on-surface-variant);font-size:13px;font-weight:500;white-space:nowrap;flex-shrink:0;transition:all .2s;}
+.f-chip.active{background:var(--md-primary);border-color:var(--md-primary);color:#fff;}
+.txn-list{padding:0 16px;}
+.txn-date-group{padding:10px 0 4px;font-size:12px;color:var(--md-on-surface-variant);font-weight:600;letter-spacing:0.5px;}
+
+/* ── REPORTS PAGE ── */
+.chart-container{position:relative;height:220px;margin:8px 0;}
+.chart-legend{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;}
+.legend-item{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--md-on-surface-variant);}
+.legend-dot{width:10px;height:10px;border-radius:50%;}
+.stat-row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--md-outline);}
+.stat-row:last-child{border-bottom:none;}
+.stat-key{font-size:14px;color:var(--md-on-surface-variant);}
+.stat-val{font-size:14px;font-weight:600;color:var(--md-on-surface);}
+
+/* ── BILLS PAGE ── */
+.bill-item{display:flex;align-items:center;gap:12px;padding:14px;background:var(--md-surface-card);border-radius:var(--md-radius);margin-bottom:10px;border:1px solid var(--md-outline);transition:transform .15s;}
+.bill-item:active{transform:scale(0.98);}
+.bill-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;}
+.bill-info{flex:1;min-width:0;}
+.bill-name{font-size:15px;font-weight:500;color:var(--md-on-surface);}
+.bill-due{font-size:12px;margin-top:2px;}
+.bill-due.overdue{color:var(--md-error);}
+.bill-due.upcoming{color:var(--md-warning);}
+.bill-due.paid{color:var(--md-secondary);}
+.bill-amount{font-family:var(--font-display);font-size:16px;font-weight:700;color:var(--md-on-surface);}
+.bill-actions{display:flex;gap:6px;}
+.bill-btn{width:32px;height:32px;border-radius:50%;background:var(--md-surface-variant);display:flex;align-items:center;justify-content:center;font-size:14px;}
+
+/* ── PROFILE PAGE ── */
+.profile-hero{padding:24px 20px;display:flex;flex-direction:column;align-items:center;background:linear-gradient(180deg,#1A1A3E 0%,var(--md-bg) 100%);}
+.profile-avatar{width:80px;height:80px;border-radius:50%;background:var(--md-primary);display:flex;align-items:center;justify-content:center;font-size:36px;font-weight:700;color:#fff;margin-bottom:12px;overflow:hidden;border:3px solid var(--md-primary-light);}
+.profile-avatar img{width:100%;height:100%;object-fit:cover;}
+.profile-name{font-family:var(--font-display);font-size:20px;font-weight:600;color:var(--md-on-surface);}
+.profile-email{font-size:13px;color:var(--md-on-surface-variant);margin-top:2px;}
+.profile-section{padding:0 16px;margin-bottom:8px;}
+.profile-item{display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid var(--md-outline);}
+.profile-item:last-child{border-bottom:none;}
+.profile-item-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.profile-item-text{flex:1;}
+.profile-item-label{font-size:15px;color:var(--md-on-surface);font-weight:400;}
+.profile-item-sub{font-size:12px;color:var(--md-on-surface-variant);margin-top:1px;}
+.profile-item-arrow{color:var(--md-on-surface-variant);font-size:16px;}
+.profile-item.danger .profile-item-label{color:var(--md-error);}
+.toggle-switch{width:44px;height:24px;border-radius:12px;background:var(--md-outline);position:relative;cursor:pointer;transition:background .2s;flex-shrink:0;}
+.toggle-switch.on{background:var(--md-primary);}
+.toggle-knob{width:20px;height:20px;border-radius:50%;background:#fff;position:absolute;top:2px;left:2px;transition:left .2s;box-shadow:0 1px 4px rgba(0,0,0,0.3);}
+.toggle-switch.on .toggle-knob{left:22px;}
+
+/* ── EMPTY STATE ── */
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 32px;text-align:center;}
+.empty-icon{font-size:64px;margin-bottom:16px;opacity:0.6;}
+.empty-title{font-size:18px;font-weight:600;color:var(--md-on-surface);margin-bottom:8px;}
+.empty-desc{font-size:14px;color:var(--md-on-surface-variant);line-height:1.6;}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:calc(var(--nav-height) + 80px);left:50%;transform:translateX(-50%) translateY(20px);background:#333344;color:#fff;padding:12px 20px;border-radius:var(--md-radius);font-size:14px;z-index:9000;opacity:0;transition:all .3s;pointer-events:none;white-space:nowrap;box-shadow:var(--md-shadow);}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+.toast.success{background:#1A5F34;}
+.toast.error{background:#7F1D1D;}
+
+/* ── UTILITY ── */
+.hidden{display:none!important;}
+.flex{display:flex;}
+.flex-col{display:flex;flex-direction:column;}
+.items-center{align-items:center;}
+.justify-between{justify-content:space-between;}
+.gap-8{gap:8px;}
+.gap-12{gap:12px;}
+.p-16{padding:16px;}
+.mb-12{margin-bottom:12px;}
+.text-sm{font-size:13px;}
+.text-muted{color:var(--md-on-surface-variant);}
+.fw-600{font-weight:600;}
+.chip-success{background:#34A85320;color:var(--md-secondary);padding:3px 10px;border-radius:20px;font-size:12px;font-weight:500;}
+.chip-error{background:#EA433520;color:var(--md-error);padding:3px 10px;border-radius:20px;font-size:12px;font-weight:500;}
+.chip-warn{background:#FBBC0420;color:#FBBC04;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:500;}
+
+/* ── SWIPE ACTIONS ── */
+.swipe-container{position:relative;overflow:hidden;border-radius:var(--md-radius);}
+.swipe-actions{position:absolute;right:0;top:0;bottom:0;display:flex;}
+.swipe-del{background:var(--md-error);display:flex;align-items:center;justify-content:center;width:72px;font-size:20px;color:#fff;}
+.swipe-edit{background:var(--md-primary);display:flex;align-items:center;justify-content:center;width:72px;font-size:20px;color:#fff;}
+
+/* ── PRIVACY / ABOUT SUB-PAGES ── */
+.subpage{position:fixed;inset:0;background:var(--md-bg);z-index:2000;display:none;flex-direction:column;}
+.subpage.open{display:flex;}
+.subpage-header{height:var(--header-height);background:var(--md-surface);border-bottom:1px solid var(--md-outline);display:flex;align-items:center;padding:0 16px;gap:12px;}
+.subpage-title{font-family:var(--font-display);font-size:18px;font-weight:600;color:var(--md-on-surface);}
+.subpage-body{flex:1;overflow-y:auto;padding:20px 16px;}
+.subpage-body h2{font-size:16px;font-weight:600;color:var(--md-on-surface);margin:20px 0 8px;}
+.subpage-body p{font-size:14px;color:var(--md-on-surface-variant);line-height:1.7;margin-bottom:8px;}
+.subpage-body h2:first-child{margin-top:0;}
+
+/* ── LANG SELECTOR ── */
+.lang-option{display:flex;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid var(--md-outline);}
+.lang-option:last-child{border-bottom:none;}
+.lang-check{color:var(--md-primary);font-size:18px;opacity:0;transition:opacity .2s;}
+.lang-option.selected .lang-check{opacity:1;}
+
+/* Loading spinner */
+.spinner{width:32px;height:32px;border:3px solid var(--md-outline);border-top-color:var(--md-primary);border-radius:50%;animation:spin .7s linear infinite;margin:40px auto;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* Ripple */
+@keyframes ripple{to{transform:scale(4);opacity:0;}}
+.ripple-effect{position:relative;overflow:hidden;}
+.ripple-effect::after{content:'';position:absolute;border-radius:50%;transform:scale(0);animation:ripple .6s linear;background:rgba(255,255,255,0.2);}
+</style>
+</head>
+<body>
+
+<!-- ═══ SPLASH SCREEN ═══ -->
+<div id="splash">
+  <div class="splash-flag">🇮🇳</div>
+  <div class="splash-logo">
+    <div class="splash-icon">₹</div>
+    <div class="splash-name">SpendiX</div>
+    <div class="splash-tagline">Smart Expense &amp; Bill Tracker</div>
+  </div>
+  <div class="splash-made">Made in India 🇮🇳</div>
+  <div class="splash-dev">Developed by DinajpurX Technologies</div>
+  <div class="splash-bar"><div class="splash-progress"></div></div>
+</div>
+
+<!-- ═══ ONBOARDING ═══ -->
+<div id="onboarding">
+  <div class="ob-slides">
+    <div class="ob-slide active" data-step="0">
+      <div class="ob-illustration">💰</div>
+      <div class="ob-title">Track Every Expense</div>
+      <div class="ob-desc">Manage your daily income and expenses effortlessly with smart categories and real-time insights.</div>
+    </div>
+    <div class="ob-slide" data-step="1">
+      <div class="ob-illustration">📊</div>
+      <div class="ob-title">Smart Reports</div>
+      <div class="ob-desc">Analyze your spending with beautiful charts, trends, and actionable financial insights.</div>
+    </div>
+    <div class="ob-slide" data-step="2">
+      <div class="ob-illustration">🔔</div>
+      <div class="ob-title">Never Miss a Bill</div>
+      <div class="ob-desc">Stay on top of upcoming bill reminders and never pay a late fee again.</div>
+    </div>
+  </div>
+  <div class="ob-dots">
+    <div class="ob-dot active" data-i="0"></div>
+    <div class="ob-dot" data-i="1"></div>
+    <div class="ob-dot" data-i="2"></div>
+  </div>
+  <div class="ob-actions">
+    <button class="ob-skip" id="ob-skip">Skip</button>
+    <button class="ob-next" id="ob-next">Continue</button>
+  </div>
+</div>
+
+<!-- ═══ AUTH SCREEN ═══ -->
+<div id="auth-screen">
+  <div class="auth-header">
+    <div class="auth-logo">
+      <div class="auth-logo-icon">₹</div>
+      <div class="auth-logo-name">SpendiX</div>
+    </div>
+    <div class="auth-welcome">Welcome Back!</div>
+    <div class="auth-sub">Sign in to manage your finances</div>
+  </div>
+  <div class="auth-tabs" style="margin-top:8px;">
+    <button class="auth-tab active" data-tab="login">Sign In</button>
+    <button class="auth-tab" data-tab="signup">Sign Up</button>
+  </div>
+  <div class="auth-form">
+    <div id="auth-error" class="auth-error"></div>
+    <!-- Login Form -->
+    <div id="login-form">
+      <div class="field-group">
+        <label class="field-label">Email Address</label>
+        <input type="email" class="field-input" id="login-email" placeholder="you@example.com" autocomplete="email"/>
+      </div>
+      <div class="field-group">
+        <label class="field-label">Password</label>
+        <input type="password" class="field-input" id="login-pass" placeholder="Enter password" autocomplete="current-password"/>
+      </div>
+      <button class="btn-primary" id="btn-login">Sign In</button>
+      <div class="auth-divider"><span>or</span></div>
+      <button class="btn-google" id="btn-google-login">
+        <svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+        Continue with Google
+      </button>
+    </div>
+    <!-- Signup Form -->
+    <div id="signup-form" class="hidden">
+      <div class="field-group">
+        <label class="field-label">Full Name</label>
+        <input type="text" class="field-input" id="signup-name" placeholder="Your full name" autocomplete="name"/>
+      </div>
+      <div class="field-group">
+        <label class="field-label">Email Address</label>
+        <input type="email" class="field-input" id="signup-email" placeholder="you@example.com" autocomplete="email"/>
+      </div>
+      <div class="field-group">
+        <label class="field-label">Password</label>
+        <input type="password" class="field-input" id="signup-pass" placeholder="Min 6 characters" autocomplete="new-password"/>
+      </div>
+      <button class="btn-primary" id="btn-signup">Create Account</button>
+      <div class="auth-divider"><span>or</span></div>
+      <button class="btn-google" id="btn-google-signup">
+        <svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+        Sign up with Google
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MAIN APP ═══ -->
+<div id="app">
+  <!-- Header -->
+  <div class="app-header" id="app-header">
+    <div class="app-header-title" id="header-title">Home</div>
+    <button class="header-action" id="header-search-btn" style="display:none;">🔍</button>
+    <button class="header-action" id="header-notif-btn">🔔</button>
+    <div class="header-avatar" id="header-avatar" onclick="switchPage('profile')">?</div>
+  </div>
+
+  <!-- Pages -->
+  <div class="pages">
+    <!-- HOME -->
+    <div class="page active" id="page-home">
+      <div class="home-page">
+        <div class="balance-hero">
+          <div class="balance-label">TOTAL BALANCE</div>
+          <div class="balance-amount" id="hero-balance">₹0.00</div>
+          <div class="balance-sub" id="hero-month">This month</div>
+        </div>
+        <div class="balance-cards">
+          <div class="stat-card">
+            <div class="stat-card-label">📈 Income</div>
+            <div class="stat-card-val income" id="stat-income">₹0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-label">📉 Expense</div>
+            <div class="stat-card-val expense" id="stat-expense">₹0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-label">💼 Savings</div>
+            <div class="stat-card-val savings" id="stat-savings">₹0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-label">🔔 Upcoming Bills</div>
+            <div class="stat-card-val bills" id="stat-bills">0</div>
+          </div>
+        </div>
+        <!-- Quick Actions -->
+        <div class="p-16">
+          <div class="section-title">Quick Actions</div>
+          <div class="quick-actions">
+            <div class="qa-btn" onclick="openAddTxn('expense')">
+              <div class="qa-icon" style="background:#EA433520;">➖</div>
+              <div class="qa-label">Add Expense</div>
+            </div>
+            <div class="qa-btn" onclick="openAddTxn('income')">
+              <div class="qa-icon" style="background:#34A85320;">➕</div>
+              <div class="qa-label">Add Income</div>
+            </div>
+            <div class="qa-btn" onclick="openAddBill()">
+              <div class="qa-icon" style="background:#1A73E820;">📄</div>
+              <div class="qa-label">Add Bill</div>
+            </div>
+          </div>
+        </div>
+        <!-- Recent Transactions -->
+        <div class="p-16" style="padding-top:0;">
+          <div class="section-title">
+            Recent Transactions
+            <span class="section-link" onclick="switchPage('transactions')">See all</span>
+          </div>
+          <div class="card" id="recent-txns">
+            <div class="empty-state" style="padding:24px 0;">
+              <div class="empty-icon">💳</div>
+              <div class="empty-title">No transactions yet</div>
+              <div class="empty-desc">Add your first income or expense</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TRANSACTIONS -->
+    <div class="page" id="page-transactions">
+      <div class="search-bar">
+        <span style="color:var(--md-on-surface-variant);font-size:18px;">🔍</span>
+        <input type="search" class="search-input" id="txn-search" placeholder="Search transactions..."/>
+        <span style="color:var(--md-on-surface-variant);font-size:18px;" onclick="clearSearch()">✕</span>
+      </div>
+      <div class="filter-chips">
+        <div class="f-chip active" data-filter="all">All</div>
+        <div class="f-chip" data-filter="income">Income</div>
+        <div class="f-chip" data-filter="expense">Expense</div>
+        <div class="f-chip" data-filter="today">Today</div>
+        <div class="f-chip" data-filter="week">This Week</div>
+        <div class="f-chip" data-filter="month">This Month</div>
+      </div>
+      <div class="txn-list" id="txn-list">
+        <div class="empty-state">
+          <div class="empty-icon">💳</div>
+          <div class="empty-title">No transactions</div>
+          <div class="empty-desc">Start tracking your money</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- REPORTS -->
+    <div class="page" id="page-reports">
+      <div class="p-16">
+        <!-- Period Filter -->
+        <div class="filter-chips" style="padding:0 0 12px;">
+          <div class="f-chip active" data-period="month">Monthly</div>
+          <div class="f-chip" data-period="week">Weekly</div>
+          <div class="f-chip" data-period="year">Yearly</div>
+          <div class="f-chip" data-period="all">All Time</div>
+        </div>
+        <!-- Summary Cards -->
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px;">
+          <div class="card" style="text-align:center;padding:12px 8px;">
+            <div style="font-size:11px;color:var(--md-on-surface-variant);">Income</div>
+            <div style="font-size:16px;font-weight:700;color:var(--md-income);" id="rep-income">₹0</div>
+          </div>
+          <div class="card" style="text-align:center;padding:12px 8px;">
+            <div style="font-size:11px;color:var(--md-on-surface-variant);">Expense</div>
+            <div style="font-size:16px;font-weight:700;color:var(--md-expense);" id="rep-expense">₹0</div>
+          </div>
+          <div class="card" style="text-align:center;padding:12px 8px;">
+            <div style="font-size:11px;color:var(--md-on-surface-variant);">Savings</div>
+            <div style="font-size:16px;font-weight:700;color:var(--md-primary);" id="rep-savings">₹0</div>
+          </div>
+        </div>
+        <!-- Pie Chart -->
+        <div class="card mb-12">
+          <div class="section-title">Expense Breakdown</div>
+          <div class="chart-container"><canvas id="pieChart"></canvas></div>
+          <div class="chart-legend" id="pie-legend"></div>
+        </div>
+        <!-- Bar Chart -->
+        <div class="card mb-12">
+          <div class="section-title">Income vs Expense</div>
+          <div class="chart-container"><canvas id="barChart"></canvas></div>
+        </div>
+        <!-- Trend -->
+        <div class="card mb-12">
+          <div class="section-title">Monthly Trend</div>
+          <div class="chart-container"><canvas id="lineChart"></canvas></div>
+        </div>
+        <!-- Category Breakdown -->
+        <div class="card">
+          <div class="section-title">Category Analysis</div>
+          <div id="cat-analysis"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BILLS -->
+    <div class="page" id="page-bills">
+      <div class="p-16">
+        <!-- Overdue -->
+        <div id="overdue-section">
+          <div class="section-title" style="color:var(--md-error);">⚠️ Overdue Bills</div>
+          <div id="overdue-list"></div>
+        </div>
+        <!-- Upcoming -->
+        <div id="upcoming-section" style="margin-top:8px;">
+          <div class="section-title">🔔 Upcoming Bills</div>
+          <div id="upcoming-list"></div>
+        </div>
+        <!-- All Bills -->
+        <div style="margin-top:8px;">
+          <div class="section-title">📋 All Bills</div>
+          <div id="all-bills-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PROFILE -->
+    <div class="page" id="page-profile">
+      <div class="profile-hero">
+        <div class="profile-avatar" id="profile-avatar-hero" onclick="triggerAvatarUpload()">?</div>
+        <input type="file" id="avatar-file" accept="image/*" style="display:none;" onchange="handleAvatarUpload(event)"/>
+        <div class="profile-name" id="profile-name-display">Loading...</div>
+        <div class="profile-email" id="profile-email-display"></div>
+      </div>
+      <div class="profile-section">
+        <div class="card">
+          <div class="profile-item" onclick="openEditProfile()">
+            <div class="profile-item-icon" style="background:#1A73E820;">✏️</div>
+            <div class="profile-item-text">
+              <div class="profile-item-label">Edit Profile</div>
+              <div class="profile-item-sub">Update name and photo</div>
+            </div>
+            <div class="profile-item-arrow">›</div>
+          </div>
+          <div class="profile-item" onclick="openChangePassword()">
+            <div class="profile-item-icon" style="background:#34A85320;">🔒</div>
+            <div class="profile-item-text">
+              <div class="profile-item-label">Change Password</div>
+              <div class="profile-item-sub">Update your password</div>
+            </div>
+            <div class="profile-item-arrow">›</div>
+          </div>
+        </div>
+      </div>
+      <div class="profile-section">
+        <div class="card">
+          <div class="profile-item" onclick="toggleTheme()">
+            <div class="profile-item-icon" style="background:#FBBC0420;">🌙</div>
+            <div class="profile-item-text"><div class="profile-item-label">Dark Mode</div></div>
+            <div class="toggle-switch" id="theme-toggle" onclick="event.stopPropagation();toggleTheme()">
+              <div class="toggle-knob"></div>
+            </div>
+          </div>
+          <div class="profile-item" onclick="openLanguage()">
+            <div class="profile-item-icon" style="background:#1A73E820;">🌐</div>
+            <div class="profile-item-text">
+              <div class="profile-item-label">Language</div>
+              <div class="profile-item-sub" id="current-lang-label">English</div>
+            </div>
+            <div class="profile-item-arrow">›</div>
+          </div>
+        </div>
+      </div>
+      <div class="profile-section">
+        <div class="card">
+          <div class="profile-item" onclick="exportData()">
+            <div class="profile-item-icon" style="background:#34A85320;">📤</div>
+            <div class="profile-item-text">
+              <div class="profile-item-label">Export Data</div>
+              <div class="profile-item-sub">Download as JSON</div>
+            </div>
+            <div class="profile-item-arrow">›</div>
+          </div>
+          <div class="profile-item" onclick="importData()">
+            <div class="profile-item-icon" style="background:#1A73E820;">📥</div>
+            <div class="profile-item-text">
+              <div class="profile-item-label">Import Data</div>
+              <div class="profile-item-sub">Restore from backup</div>
+            </div>
+            <div class="profile-item-arrow">›</div>
+          </div>
+          <input type="file" id="import-file" accept=".json" style="display:none;" onchange="handleImport(event)"/>
+        </div>
+      </div>
+      <div class="profile-section">
+        <div class="card">
+          <div class="profile-item" onclick="openSubpage('privacy')">
+            <div class="profile-item-icon" style="background:#EA433520;">🛡️</div>
+            <div class="profile-item-text"><div class="profile-item-label">Privacy Policy</div></div>
+            <div class="profile-item-arrow">›</div>
+          </div>
+          <div class="profile-item" onclick="openSubpage('terms')">
+            <div class="profile-item-icon" style="background:#FBBC0420;">📜</div>
+            <div class="profile-item-text"><div class="profile-item-label">Terms &amp; Conditions</div></div>
+            <div class="profile-item-arrow">›</div>
+          </div>
+          <div class="profile-item" onclick="openSubpage('about')">
+            <div class="profile-item-icon" style="background:#34A85320;">ℹ️</div>
+            <div class="profile-item-text"><div class="profile-item-label">About SpendiX</div></div>
+            <div class="profile-item-arrow">›</div>
+          </div>
+          <div class="profile-item" onclick="window.open('https://www.spendix.in/','_blank')">
+            <div class="profile-item-icon" style="background:#1A73E820;">🌐</div>
+            <div class="profile-item-text">
+              <div class="profile-item-label">Visit Website</div>
+              <div class="profile-item-sub">spendix.in</div>
+            </div>
+            <div class="profile-item-arrow">›</div>
+          </div>
+        </div>
+      </div>
+      <div class="profile-section">
+        <div class="card">
+          <div class="profile-item" onclick="handleLogout()">
+            <div class="profile-item-icon" style="background:#EA433520;">🚪</div>
+            <div class="profile-item-text"><div class="profile-item-label">Logout</div></div>
+            <div class="profile-item-arrow">›</div>
+          </div>
+          <div class="profile-item danger" onclick="handleDeleteAccount()">
+            <div class="profile-item-icon" style="background:#EA433530;">🗑️</div>
+            <div class="profile-item-text">
+              <div class="profile-item-label">Delete Account</div>
+              <div class="profile-item-sub" style="color:var(--md-error);">This action is irreversible</div>
+            </div>
+            <div class="profile-item-arrow">›</div>
+          </div>
+        </div>
+      </div>
+      <div style="padding:16px;text-align:center;">
+        <div style="font-size:12px;color:var(--md-on-surface-variant);">SpendiX v1.0.0 · Made in India 🇮🇳</div>
+        <div style="font-size:11px;color:var(--md-outline);margin-top:4px;">DinajpurX Technologies · Spend Smart. Save More. Grow Better.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Nav -->
+  <nav class="bottom-nav">
+    <div class="nav-item active" data-page="home" onclick="switchPage('home')">
+      <span class="nav-icon">🏠</span>
+      <span class="nav-label">Home</span>
+      <div class="nav-indicator"></div>
+    </div>
+    <div class="nav-item" data-page="transactions" onclick="switchPage('transactions')">
+      <span class="nav-icon">💳</span>
+      <span class="nav-label">Transactions</span>
+      <div class="nav-indicator"></div>
+    </div>
+    <div class="nav-item" data-page="reports" onclick="switchPage('reports')">
+      <span class="nav-icon">📊</span>
+      <span class="nav-label">Reports</span>
+      <div class="nav-indicator"></div>
+    </div>
+    <div class="nav-item" data-page="bills" onclick="switchPage('bills')">
+      <span class="nav-icon">🔔</span>
+      <span class="nav-label">Bills</span>
+      <div class="nav-indicator"></div>
+      <div class="nav-badge hidden" id="bills-badge">0</div>
+    </div>
+    <div class="nav-item" data-page="profile" onclick="switchPage('profile')">
+      <span class="nav-icon">👤</span>
+      <span class="nav-label">Profile</span>
+      <div class="nav-indicator"></div>
+    </div>
+  </nav>
+</div>
+
+<!-- FAB -->
+<button class="fab hidden" id="fab" onclick="toggleFabMenu()">＋</button>
+<div class="fab-menu hidden" id="fab-menu">
+  <div class="fab-item"><span class="fab-item-label">Add Bill</span><div class="fab-item-btn" style="background:#1A73E8;" onclick="closeFabMenu();openAddBill()">📄</div></div>
+  <div class="fab-item"><span class="fab-item-label">Add Income</span><div class="fab-item-btn" style="background:#34A853;" onclick="closeFabMenu();openAddTxn('income')">➕</div></div>
+  <div class="fab-item"><span class="fab-item-label">Add Expense</span><div class="fab-item-btn" style="background:#EA4335;" onclick="closeFabMenu();openAddTxn('expense')">➖</div></div>
+</div>
+
+<!-- Modal Overlay -->
+<div class="modal-overlay" id="modal-overlay" onclick="closeAllModals()"></div>
+
+<!-- ── ADD TRANSACTION SHEET ── -->
+<div class="bottom-sheet" id="sheet-txn">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <div class="sheet-title" id="sheet-txn-title">Add Transaction</div>
+    <button class="sheet-close" onclick="closeSheet('sheet-txn')">✕</button>
+  </div>
+  <div class="sheet-body">
+    <div class="type-toggle">
+      <button class="type-btn active expense" id="type-expense" onclick="setTxnType('expense')">Expense</button>
+      <button class="type-btn income" id="type-income" onclick="setTxnType('income')">Income</button>
+    </div>
+    <div class="amount-field">
+      <div style="color:var(--md-on-surface-variant);font-size:14px;margin-bottom:4px;">Amount (₹)</div>
+      <input type="number" class="amount-input" id="txn-amount" placeholder="0.00" min="0" step="0.01"/>
+    </div>
+    <div class="field-group">
+      <label class="field-label">Category</label>
+      <div class="cat-grid" id="cat-grid"></div>
+    </div>
+    <div class="field-group">
+      <label class="field-label">Description</label>
+      <input type="text" class="field-input" id="txn-desc" placeholder="What was this for?"/>
+    </div>
+    <div class="field-group">
+      <label class="field-label">Date</label>
+      <input type="date" class="field-input" id="txn-date"/>
+    </div>
+    <div class="field-group">
+      <label class="field-label">Notes (optional)</label>
+      <input type="text" class="field-input" id="txn-notes" placeholder="Additional notes"/>
+    </div>
+    <button class="btn-primary" onclick="saveTxn()" id="save-txn-btn">Save Transaction</button>
+  </div>
+</div>
+
+<!-- ── ADD BILL SHEET ── -->
+<div class="bottom-sheet" id="sheet-bill">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <div class="sheet-title" id="sheet-bill-title">Add Bill</div>
+    <button class="sheet-close" onclick="closeSheet('sheet-bill')">✕</button>
+  </div>
+  <div class="sheet-body">
+    <div class="field-group">
+      <label class="field-label">Bill Type</label>
+      <select class="field-select" id="bill-type">
+        <option value="⚡ Electricity">⚡ Electricity</option>
+        <option value="📱 Mobile Recharge">📱 Mobile Recharge</option>
+        <option value="🌐 Internet">🌐 Internet</option>
+        <option value="🏠 Rent">🏠 Rent</option>
+        <option value="💰 EMI">💰 EMI</option>
+        <option value="💳 Credit Card">💳 Credit Card</option>
+        <option value="🛡️ Insurance">🛡️ Insurance</option>
+        <option value="📝 Custom Bill">📝 Custom Bill</option>
+      </select>
+    </div>
+    <div class="field-group">
+      <label class="field-label">Bill Name</label>
+      <input type="text" class="field-input" id="bill-name" placeholder="e.g. BSNL Broadband"/>
+    </div>
+    <div class="field-group">
+      <label class="field-label">Amount (₹)</label>
+      <input type="number" class="field-input" id="bill-amount" placeholder="0.00" min="0" step="0.01"/>
+    </div>
+    <div class="field-group">
+      <label class="field-label">Due Date</label>
+      <input type="date" class="field-input" id="bill-due"/>
+    </div>
+    <div class="field-group">
+      <label class="field-label">Notes (optional)</label>
+      <input type="text" class="field-input" id="bill-notes" placeholder="Provider, account number..."/>
+    </div>
+    <button class="btn-primary" onclick="saveBill()" id="save-bill-btn">Save Bill</button>
+  </div>
+</div>
+
+<!-- ── EDIT PROFILE SHEET ── -->
+<div class="bottom-sheet" id="sheet-profile">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <div class="sheet-title">Edit Profile</div>
+    <button class="sheet-close" onclick="closeSheet('sheet-profile')">✕</button>
+  </div>
+  <div class="sheet-body">
+    <div class="field-group">
+      <label class="field-label">Full Name</label>
+      <input type="text" class="field-input" id="edit-name" placeholder="Your name"/>
+    </div>
+    <button class="btn-primary" onclick="saveProfile()">Save Changes</button>
+  </div>
+</div>
+
+<!-- ── CHANGE PASSWORD SHEET ── -->
+<div class="bottom-sheet" id="sheet-password">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <div class="sheet-title">Change Password</div>
+    <button class="sheet-close" onclick="closeSheet('sheet-password')">✕</button>
+  </div>
+  <div class="sheet-body">
+    <div class="field-group">
+      <label class="field-label">Current Password</label>
+      <input type="password" class="field-input" id="curr-pass" placeholder="Current password"/>
+    </div>
+    <div class="field-group">
+      <label class="field-label">New Password</label>
+      <input type="password" class="field-input" id="new-pass" placeholder="New password (min 6 chars)"/>
+    </div>
+    <button class="btn-primary" onclick="changePassword()">Update Password</button>
+  </div>
+</div>
+
+<!-- ── LANGUAGE SHEET ── -->
+<div class="bottom-sheet" id="sheet-lang">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <div class="sheet-title">Select Language</div>
+    <button class="sheet-close" onclick="closeSheet('sheet-lang')">✕</button>
+  </div>
+  <div class="sheet-body">
+    <div class="lang-option selected" data-lang="en" onclick="setLanguage('en',this)">
+      <span style="font-size:24px;">🇬🇧</span>
+      <div style="flex:1;"><div style="font-weight:500;">English</div><div class="text-muted text-sm">English</div></div>
+      <span class="lang-check">✓</span>
+    </div>
+    <div class="lang-option" data-lang="bn" onclick="setLanguage('bn',this)">
+      <span style="font-size:24px;">🇧🇩</span>
+      <div style="flex:1;"><div style="font-weight:500;">Bengali</div><div class="text-muted text-sm">বাংলা</div></div>
+      <span class="lang-check">✓</span>
+    </div>
+    <div class="lang-option" data-lang="hi" onclick="setLanguage('hi',this)">
+      <span style="font-size:24px;">🇮🇳</span>
+      <div style="flex:1;"><div style="font-weight:500;">Hindi</div><div class="text-muted text-sm">हिन्दी</div></div>
+      <span class="lang-check">✓</span>
+    </div>
+  </div>
+</div>
+
+<!-- ── SUB-PAGES ── -->
+<div class="subpage" id="subpage-privacy">
+  <div class="subpage-header">
+    <button class="header-action" onclick="closeSubpage('privacy')">←</button>
+    <div class="subpage-title">Privacy Policy</div>
+  </div>
+  <div class="subpage-body">
+    <h2>1. Data Collection</h2>
+    <p>SpendiX collects personal information you provide during account registration, including your name, email address, and profile photo. We also collect financial data you enter such as income, expenses, and bill details.</p>
+    <h2>2. User Information</h2>
+    <p>Your information is used solely to provide the SpendiX service. We do not sell, trade, or rent your personal data to any third party. Your financial records are private and only accessible to you.</p>
+    <h2>3. Firebase Usage</h2>
+    <p>SpendiX uses Google Firebase for authentication, real-time database storage, and file storage. Firebase is GDPR-compliant and employs industry-standard security measures. Data is stored in secure Google Cloud servers.</p>
+    <h2>4. Authentication Data</h2>
+    <p>Authentication is handled by Firebase Authentication. Passwords are never stored in plain text and are managed securely by Firebase. Google Sign-In uses OAuth 2.0 for secure authentication.</p>
+    <h2>5. Storage Usage</h2>
+    <p>Profile photos are stored in Firebase Storage. Financial transaction data, bills, and settings are stored in Firebase Realtime Database, accessible only by you through your authenticated account.</p>
+    <h2>6. Security</h2>
+    <p>All data transmission is encrypted via HTTPS/TLS. Firebase Database Rules ensure each user can only read/write their own data. We regularly review and update our security practices.</p>
+    <h2>7. Your Rights</h2>
+    <p>You have the right to access, update, export, or delete all your personal data at any time through the Profile section of the app. You may also request account deletion, which permanently removes all your data.</p>
+    <h2>8. Data Deletion</h2>
+    <p>To delete your account and all associated data, go to Profile → Delete Account. This action is irreversible and will permanently erase all transactions, bills, and personal information from our servers.</p>
+    <h2>9. Contact Information</h2>
+    <p>For privacy concerns or data requests, contact us at: <a href="https://www.spendix.in/">www.spendix.in</a> or through DinajpurX Technologies. Last updated: January 2026.</p>
+  </div>
+</div>
+
+<div class="subpage" id="subpage-terms">
+  <div class="subpage-header">
+    <button class="header-action" onclick="closeSubpage('terms')">←</button>
+    <div class="subpage-title">Terms & Conditions</div>
+  </div>
+  <div class="subpage-body">
+    <h2>1. Acceptance of Terms</h2>
+    <p>By using SpendiX, you agree to these Terms & Conditions. If you do not agree, please do not use the application.</p>
+    <h2>2. Use of Service</h2>
+    <p>SpendiX is provided for personal financial tracking purposes only. You are responsible for maintaining the security of your account and all activities that occur under your credentials.</p>
+    <h2>3. User Responsibilities</h2>
+    <p>You agree to provide accurate information, keep your login credentials secure, not misuse the platform, and comply with all applicable laws in your jurisdiction.</p>
+    <h2>4. Data Accuracy</h2>
+    <p>SpendiX is a tracking tool only. We are not responsible for financial decisions made based on data entered in the app. Please consult a financial advisor for professional advice.</p>
+    <h2>5. Service Availability</h2>
+    <p>We strive for 99% uptime but do not guarantee uninterrupted service. SpendiX may be updated, modified, or temporarily unavailable for maintenance.</p>
+    <h2>6. Intellectual Property</h2>
+    <p>All rights, title, and interest in SpendiX, including the logo, design, and code, belong to DinajpurX Technologies. Unauthorized reproduction is prohibited.</p>
+    <h2>7. Limitation of Liability</h2>
+    <p>DinajpurX Technologies is not liable for any financial loss, data loss, or damages arising from the use of SpendiX. The service is provided "as is" without warranty.</p>
+    <h2>8. Changes to Terms</h2>
+    <p>We reserve the right to update these Terms at any time. Continued use of SpendiX after updates constitutes acceptance of the new Terms.</p>
+    <h2>9. Contact</h2>
+    <p>Questions about these Terms may be directed to DinajpurX Technologies at <a href="https://www.spendix.in/">www.spendix.in</a>.</p>
+  </div>
+</div>
+
+<div class="subpage" id="subpage-about">
+  <div class="subpage-header">
+    <button class="header-action" onclick="closeSubpage('about')">←</button>
+    <div class="subpage-title">About SpendiX</div>
+  </div>
+  <div class="subpage-body">
+    <div style="text-align:center;padding:20px 0;">
+      <div style="width:80px;height:80px;background:linear-gradient(135deg,#1A73E8,#4A9EF8);border-radius:22px;display:flex;align-items:center;justify-content:center;font-size:40px;margin:0 auto 16px;box-shadow:0 8px 24px rgba(26,115,232,0.4);">₹</div>
+      <div style="font-size:28px;font-weight:700;font-family:var(--font-display);">SpendiX</div>
+      <div style="font-size:14px;color:var(--md-on-surface-variant);margin-top:4px;">Version 1.0.0</div>
+      <div style="font-size:13px;color:var(--md-primary);margin-top:8px;font-style:italic;">Spend Smart. Save More. Grow Better.</div>
+    </div>
+    <div class="card mb-12">
+      <p style="color:var(--md-on-surface);line-height:1.8;">SpendiX is a professional personal finance management application that helps you track daily expenses, manage income, monitor upcoming bills, and achieve your financial goals — all in one place with a beautiful, intuitive interface.</p>
+    </div>
+    <div class="card mb-12">
+      <div style="display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--md-outline);">
+        <span>🏢</span><div><div style="font-size:13px;color:var(--md-on-surface-variant);">Developer</div><div style="font-weight:500;">DinajpurX Technologies</div></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--md-outline);">
+        <span>🌐</span><div><div style="font-size:13px;color:var(--md-on-surface-variant);">Website</div><a href="https://www.spendix.in/" style="font-weight:500;">www.spendix.in</a></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--md-outline);">
+        <span>📦</span><div><div style="font-size:13px;color:var(--md-on-surface-variant);">Package</div><div style="font-weight:500;">com.dinajpurx.spendix</div></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;padding:8px 0;">
+        <span>🇮🇳</span><div><div style="font-size:13px;color:var(--md-on-surface-variant);">Origin</div><div style="font-weight:500;">Made in India</div></div>
+      </div>
+    </div>
+    <div style="text-align:center;font-size:12px;color:var(--md-on-surface-variant);padding:8px 0;">© 2026 DinajpurX Technologies. All rights reserved.</div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════
+// SPENDIX — MAIN APPLICATION LOGIC
+// ═══════════════════════════════════════════════════
+
+// ── STATE ──
+const STATE = {
+  user: null,
+  transactions: {},
+  bills: {},
+  profile: {},
+  currentPage: 'home',
+  txnFilter: 'all',
+  reportPeriod: 'month',
+  editTxnId: null,
+  editBillId: null,
+  txnType: 'expense',
+  selectedCat: '',
+  charts: {},
+  lang: localStorage.getItem('spendix_lang') || 'en',
+  theme: localStorage.getItem('spendix_theme') || 'dark',
+  fabOpen: false,
+};
+
+// ── CATEGORIES ──
+const CATS = {
+  expense: [
+    {id:'food',label:'Food',icon:'🍔'},
+    {id:'transport',label:'Transport',icon:'🚗'},
+    {id:'shopping',label:'Shopping',icon:'🛍️'},
+    {id:'medical',label:'Medical',icon:'💊'},
+    {id:'education',label:'Education',icon:'📚'},
+    {id:'entertainment',label:'Fun',icon:'🎬'},
+    {id:'rent',label:'Rent',icon:'🏠'},
+    {id:'others',label:'Others',icon:'📦'},
+  ],
+  income: [
+    {id:'salary',label:'Salary',icon:'💼'},
+    {id:'investment',label:'Investment',icon:'📈'},
+    {id:'business',label:'Business',icon:'🏢'},
+    {id:'freelance',label:'Freelance',icon:'💻'},
+    {id:'gift',label:'Gift',icon:'🎁'},
+    {id:'rental',label:'Rental',icon:'🏘️'},
+    {id:'refund',label:'Refund',icon:'↩️'},
+    {id:'others',label:'Others',icon:'📦'},
+  ]
+};
+const CAT_COLORS = {food:'#FF6384',transport:'#36A2EB',shopping:'#FFCE56',medical:'#FF4560',education:'#00D1B2',entertainment:'#9B59B6',rent:'#E67E22',salary:'#27AE60',investment:'#2ECC71',business:'#3498DB',freelance:'#1ABC9C',others:'#95A5A6'};
+
+// ── I18N ──
+const I18N = {
+  en:{home:'Home',transactions:'Transactions',reports:'Reports',bills:'Bills',profile:'Profile'},
+  bn:{home:'হোম',transactions:'লেনদেন',reports:'রিপোর্ট',bills:'বিল',profile:'প্রোফাইল'},
+  hi:{home:'होम',transactions:'लेनदेन',reports:'रिपोर्ट',bills:'बिल',profile:'प्रोफाइल'},
+};
+
+// ── THEME ──
+function applyTheme(t){
+  document.documentElement.setAttribute('data-theme', t === 'light' ? 'light' : '');
+  const tog = document.getElementById('theme-toggle');
+  if (tog) { tog.classList.toggle('on', t === 'dark'); }
+  localStorage.setItem('spendix_theme', t);
+  STATE.theme = t;
+}
+function toggleTheme(){
+  applyTheme(STATE.theme === 'dark' ? 'light' : 'dark');
+}
+applyTheme(STATE.theme);
+
+// ── TOAST ──
+let toastTimer;
+function showToast(msg, type=''){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (type ? ' '+type : '');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=> t.className = 'toast', 2800);
+}
+
+// ── SPLASH & ONBOARDING ──
+window.addEventListener('DOMContentLoaded', () => {
+  setTimeout(()=>{
+    document.getElementById('splash').style.opacity = '0';
+    document.getElementById('splash').style.transition = 'opacity 0.5s';
+    setTimeout(()=>{
+      document.getElementById('splash').style.display = 'none';
+      if (!localStorage.getItem('spendix_ob_done')) {
+        showOnboarding();
+      } else {
+        initAuth();
+      }
+    }, 500);
+  }, 3000);
+});
+
+function showOnboarding(){
+  document.getElementById('onboarding').style.display = 'flex';
+}
+let obStep = 0;
+document.getElementById('ob-next').addEventListener('click', ()=>{
+  if (obStep < 2) {
+    goObStep(obStep + 1);
+  } else {
+    finishOnboarding();
+  }
+});
+document.getElementById('ob-skip').addEventListener('click', finishOnboarding);
+function goObStep(n){
+  document.querySelectorAll('.ob-slide').forEach((s,i)=>{
+    s.classList.remove('active','prev');
+    if(i===n) s.classList.add('active');
+    else if(i<n) s.classList.add('prev');
+  });
+  document.querySelectorAll('.ob-dot').forEach((d,i)=> d.classList.toggle('active',i===n));
+  document.getElementById('ob-next').textContent = n===2 ? 'Get Started' : 'Continue';
+  obStep = n;
+}
+function finishOnboarding(){
+  localStorage.setItem('spendix_ob_done','1');
+  document.getElementById('onboarding').style.display = 'none';
+  initAuth();
+}
+
+// ── AUTH ──
+function initAuth(){
+  window.addEventListener('firebaseReady', ()=>{
+    const {onAuthStateChanged, auth} = window._fb;
+    onAuthStateChanged(auth, user => {
+      if (user) {
+        STATE.user = user;
+        showApp(user);
+      } else {
+        showAuthScreen();
+      }
+    });
+  });
+  if (window._fb) {
+    const {onAuthStateChanged, auth} = window._fb;
+    onAuthStateChanged(auth, user => {
+      if (user) { STATE.user = user; showApp(user); }
+      else showAuthScreen();
+    });
+  }
+}
+
+function showAuthScreen(){
+  document.getElementById('auth-screen').style.display = 'flex';
+  document.getElementById('app').style.display = 'none';
+}
+function showApp(user){
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+  document.getElementById('fab').classList.remove('hidden');
+  loadUserData(user.uid);
+  updateHeaderAvatar(user);
+  // Profile page
+  document.getElementById('profile-name-display').textContent = user.displayName || 'User';
+  document.getElementById('profile-email-display').textContent = user.email || '';
+  // Theme toggle
+  document.getElementById('theme-toggle').classList.toggle('on', STATE.theme === 'dark');
+  updateLangLabel();
+}
+
+// Auth tabs
+document.querySelectorAll('.auth-tab').forEach(t => {
+  t.addEventListener('click', ()=>{
+    document.querySelectorAll('.auth-tab').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    const tab = t.dataset.tab;
+    document.getElementById('login-form').classList.toggle('hidden', tab !== 'login');
+    document.getElementById('signup-form').classList.toggle('hidden', tab !== 'signup');
+    document.getElementById('auth-error').style.display = 'none';
+    const welcome = document.querySelector('.auth-welcome');
+    welcome.textContent = tab === 'login' ? 'Welcome Back!' : 'Create Account';
+    document.querySelector('.auth-sub').textContent = tab === 'login' ? 'Sign in to manage your finances' : 'Join SpendiX today';
+  });
+});
+
+function showAuthError(msg){ const e=document.getElementById('auth-error'); e.textContent=msg; e.style.display='block'; }
+
+document.getElementById('btn-login').addEventListener('click', async ()=>{
+  const {signInWithEmailAndPassword, auth} = window._fb;
+  const email = document.getElementById('login-email').value.trim();
+  const pass = document.getElementById('login-pass').value;
+  if(!email||!pass){ showAuthError('Please fill all fields.'); return; }
+  try {
+    document.getElementById('btn-login').textContent = 'Signing in...';
+    await signInWithEmailAndPassword(auth, email, pass);
+  } catch(e) {
+    showAuthError(friendlyAuthError(e.code));
+    document.getElementById('btn-login').textContent = 'Sign In';
+  }
+});
+
+document.getElementById('btn-signup').addEventListener('click', async ()=>{
+  const {createUserWithEmailAndPassword, updateProfile, auth} = window._fb;
+  const name = document.getElementById('signup-name').value.trim();
+  const email = document.getElementById('signup-email').value.trim();
+  const pass = document.getElementById('signup-pass').value;
+  if(!name||!email||!pass){ showAuthError('Please fill all fields.'); return; }
+  if(pass.length < 6){ showAuthError('Password must be at least 6 characters.'); return; }
+  try {
+    document.getElementById('btn-signup').textContent = 'Creating...';
+    const cred = await createUserWithEmailAndPassword(auth, email, pass);
+    await updateProfile(cred.user, { displayName: name });
+  } catch(e) {
+    showAuthError(friendlyAuthError(e.code));
+    document.getElementById('btn-signup').textContent = 'Create Account';
+  }
+});
+
+async function googleSignIn(){
+  const {signInWithPopup, googleProvider, auth} = window._fb;
+  try { await signInWithPopup(auth, googleProvider); }
+  catch(e){ showAuthError(friendlyAuthError(e.code)); }
+}
+document.getElementById('btn-google-login').addEventListener('click', googleSignIn);
+document.getElementById('btn-google-signup').addEventListener('click', googleSignIn);
+
+function friendlyAuthError(code){
+  const map = {
+    'auth/user-not-found':'No account found with this email.',
+    'auth/wrong-password':'Incorrect password.',
+    'auth/email-already-in-use':'This email is already registered.',
+    'auth/invalid-email':'Invalid email address.',
+    'auth/weak-password':'Password is too weak.',
+    'auth/too-many-requests':'Too many attempts. Please try again later.',
+    'auth/network-request-failed':'Network error. Check your connection.',
+  };
+  return map[code] || 'Authentication failed. Please try again.';
+}
+
+// ── FIREBASE DATA ──
+function dbRef(path){ return window._fb.ref(window._fb.db, path); }
+
+function loadUserData(uid){
+  const {onValue, ref, db} = window._fb;
+  onValue(ref(db, `users/${uid}/transactions`), snap => {
+    STATE.transactions = snap.val() || {};
+    renderAll();
+  });
+  onValue(ref(db, `users/${uid}/bills`), snap => {
+    STATE.bills = snap.val() || {};
+    renderBills();
+    updateBillsBadge();
+  });
+  onValue(ref(db, `users/${uid}/profile`), snap => {
+    STATE.profile = snap.val() || {};
+  });
+}
+
+async function saveToDb(path, data){
+  const {ref, db, set} = window._fb;
+  await set(ref(db, path), data);
+}
+async function pushToDb(path, data){
+  const {ref, db, push} = window._fb;
+  return push(ref(db, path), data);
+}
+async function removeFromDb(path){
+  const {ref, db, remove} = window._fb;
+  await remove(ref(db, path));
+}
+async function updateDb(path, data){
+  const {ref, db, update} = window._fb;
+  await update(ref(db, path), data);
+}
+
+// ── NAVIGATION ──
+function switchPage(page){
+  STATE.currentPage = page;
+  document.querySelectorAll('.page').forEach(p=> p.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>{
+    n.classList.toggle('active', n.dataset.page === page);
+  });
+  const titles = {home:'Home',transactions:'Transactions',reports:'Reports',bills:'Bills',profile:'Profile'};
+  document.getElementById('header-title').textContent = titles[page] || 'SpendiX';
+  if(page === 'reports') renderCharts();
+  if(page === 'bills') renderBills();
+  closeFabMenu();
+}
+
+// ── FAB ──
+function toggleFabMenu(){
+  STATE.fabOpen = !STATE.fabOpen;
+  document.getElementById('fab').textContent = STATE.fabOpen ? '✕' : '＋';
+  document.getElementById('fab-menu').classList.toggle('open', STATE.fabOpen);
+  document.getElementById('fab-menu').classList.toggle('hidden', false);
+  document.getElementById('modal-overlay').classList.toggle('open', STATE.fabOpen);
+}
+function closeFabMenu(){
+  STATE.fabOpen = false;
+  document.getElementById('fab').textContent = '＋';
+  document.getElementById('fab-menu').classList.remove('open');
+  if(!document.querySelector('.bottom-sheet.open')) document.getElementById('modal-overlay').classList.remove('open');
+}
+
+// ── MODALS / SHEETS ──
+function openSheet(id){
+  document.getElementById(id).classList.add('open');
+  document.getElementById('modal-overlay').classList.add('open');
+  closeFabMenu();
+}
+function closeSheet(id){
+  document.getElementById(id).classList.remove('open');
+  if(!document.querySelector('.bottom-sheet.open')) {
+    document.getElementById('modal-overlay').classList.remove('open');
+  }
+}
+function closeAllModals(){
+  document.querySelectorAll('.bottom-sheet').forEach(s=> s.classList.remove('open'));
+  document.getElementById('modal-overlay').classList.remove('open');
+  closeFabMenu();
+}
+
+// ── ADD TRANSACTION ──
+function openAddTxn(type='expense', editId=null){
+  STATE.editTxnId = editId;
+  STATE.txnType = type;
+  document.getElementById('sheet-txn-title').textContent = editId ? 'Edit Transaction' : 'Add Transaction';
+  document.getElementById('save-txn-btn').textContent = editId ? 'Update Transaction' : 'Save Transaction';
+  setTxnType(type);
+  document.getElementById('txn-date').value = new Date().toISOString().split('T')[0];
+  if(editId){
+    const t = STATE.transactions[editId];
+    if(t){
+      setTxnType(t.type);
+      document.getElementById('txn-amount').value = t.amount;
+      document.getElementById('txn-desc').value = t.description || '';
+      document.getElementById('txn-notes').value = t.notes || '';
+      document.getElementById('txn-date').value = t.date;
+      STATE.selectedCat = t.category;
+      renderCatGrid();
+    }
+  } else {
+    document.getElementById('txn-amount').value = '';
+    document.getElementById('txn-desc').value = '';
+    document.getElementById('txn-notes').value = '';
+    STATE.selectedCat = '';
+    renderCatGrid();
+  }
+  openSheet('sheet-txn');
+}
+
+function setTxnType(type){
+  STATE.txnType = type;
+  document.getElementById('type-expense').classList.toggle('active', type==='expense');
+  document.getElementById('type-income').classList.toggle('active', type==='income');
+  if(type==='expense') document.getElementById('type-expense').classList.add('expense');
+  else document.getElementById('type-income').classList.add('income');
+  STATE.selectedCat = '';
+  renderCatGrid();
+}
+
+function renderCatGrid(){
+  const cats = CATS[STATE.txnType];
+  document.getElementById('cat-grid').innerHTML = cats.map(c=>`
+    <div class="cat-chip ${STATE.selectedCat===c.id?'selected':''}" onclick="selectCat('${c.id}')">
+      <span>${c.icon}</span><small>${c.label}</small>
+    </div>`).join('');
+}
+function selectCat(id){
+  STATE.selectedCat = id;
+  renderCatGrid();
+}
+
+async function saveTxn(){
+  const amount = parseFloat(document.getElementById('txn-amount').value);
+  if(!amount || amount <= 0){ showToast('Enter a valid amount','error'); return; }
+  if(!STATE.selectedCat){ showToast('Select a category','error'); return; }
+  const txn = {
+    type: STATE.txnType,
+    amount,
+    category: STATE.selectedCat,
+    description: document.getElementById('txn-desc').value || getCatLabel(STATE.selectedCat),
+    notes: document.getElementById('txn-notes').value,
+    date: document.getElementById('txn-date').value || new Date().toISOString().split('T')[0],
+    createdAt: Date.now()
+  };
+  const uid = STATE.user.uid;
+  try {
+    if(STATE.editTxnId){
+      await updateDb(`users/${uid}/transactions/${STATE.editTxnId}`, txn);
+      showToast('Transaction updated ✓','success');
+    } else {
+      await pushToDb(`users/${uid}/transactions`, txn);
+      showToast('Transaction saved ✓','success');
+    }
+    closeSheet('sheet-txn');
+    STATE.editTxnId = null;
+  } catch(e){ showToast('Failed to save. Check connection.','error'); }
+}
+
+function getCatLabel(id){
+  return [...CATS.expense,...CATS.income].find(c=>c.id===id)?.label || id;
+}
+function getCatIcon(id){
+  return [...CATS.expense,...CATS.income].find(c=>c.id===id)?.icon || '📦';
+}
+function getCatColor(id){ return CAT_COLORS[id] || '#888'; }
+
+async function deleteTxn(id){
+  if(!confirm('Delete this transaction?')) return;
+  await removeFromDb(`users/${STATE.user.uid}/transactions/${id}`);
+  showToast('Deleted','success');
+}
+
+// ── RENDER FUNCTIONS ──
+function renderAll(){
+  renderHome();
+  renderTxnList();
+  if(STATE.currentPage === 'reports') renderCharts();
+}
+
+function getFilteredTxns(filter){
+  const all = Object.entries(STATE.transactions).map(([id,t])=>({id,...t}));
+  const now = new Date(); const today = now.toISOString().split('T')[0];
+  const weekAgo = new Date(now - 7*86400000).toISOString().split('T')[0];
+  const monthStart = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-01`;
+  switch(filter){
+    case 'income': return all.filter(t=>t.type==='income');
+    case 'expense': return all.filter(t=>t.type==='expense');
+    case 'today': return all.filter(t=>t.date===today);
+    case 'week': return all.filter(t=>t.date>=weekAgo);
+    case 'month': return all.filter(t=>t.date>=monthStart);
+    default: return all;
+  }
+}
+
+function renderHome(){
+  const all = Object.values(STATE.transactions);
+  const now = new Date();
+  const monthStart = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-01`;
+  const monthTxns = all.filter(t=>t.date>=monthStart);
+  const income = monthTxns.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
+  const expense = monthTxns.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+  const totalIncome = all.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
+  const totalExpense = all.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+  const balance = totalIncome - totalExpense;
+  document.getElementById('hero-balance').textContent = '₹'+balance.toLocaleString('en-IN',{minimumFractionDigits:2});
+  document.getElementById('stat-income').textContent = '₹'+fmt(income);
+  document.getElementById('stat-expense').textContent = '₹'+fmt(expense);
+  document.getElementById('stat-savings').textContent = '₹'+fmt(income-expense);
+  // Recent
+  const recent = Object.entries(STATE.transactions)
+    .map(([id,t])=>({id,...t}))
+    .sort((a,b)=>b.createdAt-a.createdAt).slice(0,5);
+  const box = document.getElementById('recent-txns');
+  if(!recent.length){
+    box.innerHTML = `<div class="empty-state" style="padding:24px 0;"><div class="empty-icon">💳</div><div class="empty-title">No transactions yet</div><div class="empty-desc">Add your first income or expense</div></div>`;
+  } else {
+    box.innerHTML = recent.map(t=> txnHTML(t)).join('');
+  }
+  // Upcoming bills count
+  const upcomingBills = Object.values(STATE.bills).filter(b=> !b.paid && b.dueDate >= new Date().toISOString().split('T')[0]).length;
+  document.getElementById('stat-bills').textContent = upcomingBills;
+}
+
+function txnHTML(t){
+  const icon = getCatIcon(t.category);
+  const color = getCatColor(t.category);
+  const sign = t.type==='income' ? '+' : '-';
+  return `<div class="txn-item" onclick="openAddTxn('${t.type}','${t.id}')">
+    <div class="txn-cat-icon" style="background:${color}20;">${icon}</div>
+    <div class="txn-info">
+      <div class="txn-name">${escHtml(t.description||getCatLabel(t.category))}</div>
+      <div class="txn-meta">${t.date} · ${getCatLabel(t.category)}</div>
+    </div>
+    <div class="txn-amount ${t.type}">${sign}₹${fmt(t.amount)}</div>
+    <button onclick="event.stopPropagation();deleteTxn('${t.id}')" style="background:transparent;color:var(--md-error);font-size:16px;padding:4px 8px;">🗑</button>
+  </div>`;
+}
+
+function renderTxnList(){
+  const search = (document.getElementById('txn-search')?.value || '').toLowerCase();
+  let txns = getFilteredTxns(STATE.txnFilter);
+  if(search) txns = txns.filter(t=>
+    (t.description||'').toLowerCase().includes(search) ||
+    getCatLabel(t.category).toLowerCase().includes(search)
+  );
+  txns.sort((a,b)=>b.createdAt-a.createdAt);
+  const box = document.getElementById('txn-list');
+  if(!txns.length){
+    box.innerHTML = `<div class="empty-state"><div class="empty-icon">🔍</div><div class="empty-title">No transactions found</div><div class="empty-desc">Try a different filter or search term</div></div>`;
+    return;
+  }
+  // Group by date
+  const groups = {};
+  txns.forEach(t=>{ if(!groups[t.date]) groups[t.date]=[]; groups[t.date].push(t); });
+  box.innerHTML = Object.entries(groups).sort(([a],[b])=>b.localeCompare(a)).map(([date,ts])=>`
+    <div class="txn-date-group">${formatDate(date)}</div>
+    ${ts.map(t=>txnHTML(t)).join('')}
+  `).join('');
+}
+
+// Filter chips - Transactions
+document.querySelectorAll('#page-transactions .f-chip').forEach(c=>{
+  c.addEventListener('click',()=>{
+    document.querySelectorAll('#page-transactions .f-chip').forEach(x=>x.classList.remove('active'));
+    c.classList.add('active');
+    STATE.txnFilter = c.dataset.filter;
+    renderTxnList();
+  });
+});
+document.getElementById('txn-search').addEventListener('input', renderTxnList);
+function clearSearch(){ document.getElementById('txn-search').value=''; renderTxnList(); }
+
+// Filter chips - Reports
+document.querySelectorAll('#page-reports .f-chip').forEach(c=>{
+  c.addEventListener('click',()=>{
+    document.querySelectorAll('#page-reports .f-chip').forEach(x=>x.classList.remove('active'));
+    c.classList.add('active');
+    STATE.reportPeriod = c.dataset.period;
+    renderCharts();
+  });
+});
+
+// ── CHARTS ──
+function getReportTxns(){
+  const all = Object.values(STATE.transactions);
+  const now = new Date();
+  const today = now.toISOString().split('T')[0];
+  const weekAgo = new Date(now - 7*86400000).toISOString().split('T')[0];
+  const monthStart = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-01`;
+  const yearStart = `${now.getFullYear()}-01-01`;
+  switch(STATE.reportPeriod){
+    case 'week': return all.filter(t=>t.date>=weekAgo);
+    case 'month': return all.filter(t=>t.date>=monthStart);
+    case 'year': return all.filter(t=>t.date>=yearStart);
+    default: return all;
+  }
+}
+
+function renderCharts(){
+  const txns = getReportTxns();
+  const income = txns.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
+  const expense = txns.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+  document.getElementById('rep-income').textContent = '₹'+fmt(income);
+  document.getElementById('rep-expense').textContent = '₹'+fmt(expense);
+  document.getElementById('rep-savings').textContent = '₹'+fmt(income-expense);
+
+  // Pie chart - expense by category
+  const expTxns = txns.filter(t=>t.type==='expense');
+  const byCat = {};
+  expTxns.forEach(t=>{ byCat[t.category]=(byCat[t.category]||0)+t.amount; });
+  const pieLabels = Object.keys(byCat).map(k=>getCatLabel(k));
+  const pieData = Object.values(byCat);
+  const pieColors = Object.keys(byCat).map(k=>getCatColor(k));
+
+  destroyChart('pieChart');
+  if(pieData.length){
+    STATE.charts.pie = new Chart(document.getElementById('pieChart'), {
+      type:'doughnut',
+      data:{labels:pieLabels, datasets:[{data:pieData,backgroundColor:pieColors,borderWidth:0,hoverOffset:8}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},cutout:'60%'}
+    });
+    document.getElementById('pie-legend').innerHTML = pieLabels.map((l,i)=>
+      `<div class="legend-item"><div class="legend-dot" style="background:${pieColors[i]}"></div>${l}</div>`
+    ).join('');
+  } else {
+    document.getElementById('pie-legend').innerHTML = '<div class="text-muted text-sm" style="padding:12px 0;">No expense data for this period</div>';
+  }
+
+  // Bar chart - income vs expense
+  destroyChart('barChart');
+  STATE.charts.bar = new Chart(document.getElementById('barChart'),{
+    type:'bar',
+    data:{
+      labels:['Income','Expense','Savings'],
+      datasets:[{
+        data:[income, expense, income-expense],
+        backgroundColor:['#34A85380','#EA433580','#1A73E880'],
+        borderColor:['#34A853','#EA4335','#1A73E8'],
+        borderWidth:2,borderRadius:8
+      }]
+    },
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{
+      x:{grid:{display:false},ticks:{color:'#888'}},
+      y:{grid:{color:'#333'},ticks:{color:'#888',callback:v=>'₹'+fmt(v)}}
+    }}
+  });
+
+  // Line chart - monthly trend (last 6 months)
+  const months = [];
+  const incomeByMonth = [];
+  const expByMonth = [];
+  for(let i=5;i>=0;i--){
+    const d = new Date(new Date().getFullYear(), new Date().getMonth()-i, 1);
+    const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    months.push(d.toLocaleString('default',{month:'short'}));
+    const mTxns = Object.values(STATE.transactions).filter(t=>t.date.startsWith(key));
+    incomeByMonth.push(mTxns.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0));
+    expByMonth.push(mTxns.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0));
+  }
+  destroyChart('lineChart');
+  STATE.charts.line = new Chart(document.getElementById('lineChart'),{
+    type:'line',
+    data:{
+      labels:months,
+      datasets:[
+        {label:'Income',data:incomeByMonth,borderColor:'#34A853',backgroundColor:'#34A85320',tension:0.4,fill:true,pointBackgroundColor:'#34A853'},
+        {label:'Expense',data:expByMonth,borderColor:'#EA4335',backgroundColor:'#EA433520',tension:0.4,fill:true,pointBackgroundColor:'#EA4335'}
+      ]
+    },
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#888',usePointStyle:true}}},
+      scales:{x:{grid:{display:false},ticks:{color:'#888'}},y:{grid:{color:'#333'},ticks:{color:'#888',callback:v=>'₹'+fmt(v)}}}}
+  });
+
+  // Category analysis
+  const allCats = [...new Set(txns.map(t=>t.category))];
+  document.getElementById('cat-analysis').innerHTML = allCats.length ? allCats.map(cat=>{
+    const total = txns.filter(t=>t.category===cat).reduce((s,t)=>s+t.amount,0);
+    const type = txns.find(t=>t.category===cat)?.type;
+    return `<div class="stat-row">
+      <span class="stat-key">${getCatIcon(cat)} ${getCatLabel(cat)}</span>
+      <span class="stat-val" style="color:${type==='income'?'var(--md-income)':'var(--md-expense)'};">${type==='income'?'+':'-'}₹${fmt(total)}</span>
+    </div>`;
+  }).join('') : '<div class="text-muted text-sm" style="padding:12px 0;">No data for selected period</div>';
+}
+
+function destroyChart(id){
+  if(STATE.charts[id==='pieChart'?'pie':id==='barChart'?'bar':'line']){
+    STATE.charts[id==='pieChart'?'pie':id==='barChart'?'bar':'line'].destroy();
+  }
+}
+
+// ── BILLS ──
+function openAddBill(editId=null){
+  STATE.editBillId = editId;
+  document.getElementById('sheet-bill-title').textContent = editId ? 'Edit Bill' : 'Add Bill';
+  document.getElementById('save-bill-btn').textContent = editId ? 'Update Bill' : 'Save Bill';
+  const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate()+1);
+  document.getElementById('bill-due').value = tomorrow.toISOString().split('T')[0];
+  if(editId){
+    const b = STATE.bills[editId];
+    if(b){
+      document.getElementById('bill-type').value = b.type || '⚡ Electricity';
+      document.getElementById('bill-name').value = b.name;
+      document.getElementById('bill-amount').value = b.amount;
+      document.getElementById('bill-due').value = b.dueDate;
+      document.getElementById('bill-notes').value = b.notes||'';
+    }
+  } else {
+    document.getElementById('bill-name').value='';
+    document.getElementById('bill-amount').value='';
+    document.getElementById('bill-notes').value='';
+  }
+  openSheet('sheet-bill');
+}
+
+async function saveBill(){
+  const name = document.getElementById('bill-name').value.trim();
+  const amount = parseFloat(document.getElementById('bill-amount').value);
+  const dueDate = document.getElementById('bill-due').value;
+  if(!name){ showToast('Enter bill name','error'); return; }
+  if(!amount||amount<=0){ showToast('Enter valid amount','error'); return; }
+  if(!dueDate){ showToast('Select due date','error'); return; }
+  const bill = {
+    type: document.getElementById('bill-type').value,
+    name, amount, dueDate,
+    notes: document.getElementById('bill-notes').value,
+    paid: false,
+    createdAt: Date.now()
+  };
+  try {
+    if(STATE.editBillId){
+      bill.paid = STATE.bills[STATE.editBillId]?.paid || false;
+      await updateDb(`users/${STATE.user.uid}/bills/${STATE.editBillId}`, bill);
+      showToast('Bill updated ✓','success');
+    } else {
+      await pushToDb(`users/${STATE.user.uid}/bills`, bill);
+      showToast('Bill added ✓','success');
+    }
+    closeSheet('sheet-bill');
+    STATE.editBillId = null;
+  } catch(e){ showToast('Failed to save bill','error'); }
+}
+
+async function toggleBillPaid(id){
+  const bill = STATE.bills[id];
+  if(!bill) return;
+  await updateDb(`users/${STATE.user.uid}/bills/${id}`, {...bill, paid:!bill.paid});
+  showToast(bill.paid ? 'Marked unpaid' : 'Marked as paid ✓', 'success');
+}
+
+async function deleteBill(id){
+  if(!confirm('Delete this bill?')) return;
+  await removeFromDb(`users/${STATE.user.uid}/bills/${id}`);
+  showToast('Bill deleted','success');
+}
+
+function renderBills(){
+  const today = new Date().toISOString().split('T')[0];
+  const bills = Object.entries(STATE.bills).map(([id,b])=>({id,...b}));
+  const overdue = bills.filter(b=> !b.paid && b.dueDate < today).sort((a,b)=>a.dueDate.localeCompare(b.dueDate));
+  const upcoming = bills.filter(b=> !b.paid && b.dueDate >= today).sort((a,b)=>a.dueDate.localeCompare(b.dueDate));
+  const all = bills.sort((a,b)=>a.dueDate.localeCompare(b.dueDate));
+
+  const overdueEl = document.getElementById('overdue-list');
+  const upcomingEl = document.getElementById('upcoming-list');
+  const allEl = document.getElementById('all-bills-list');
+  document.getElementById('overdue-section').style.display = overdue.length ? '' : 'none';
+
+  overdueEl.innerHTML = overdue.map(b=> billHTML(b, 'overdue')).join('');
+  upcomingEl.innerHTML = upcoming.length ? upcoming.map(b=> billHTML(b,'upcoming')).join('') :
+    `<div class="empty-state" style="padding:20px 0;"><div class="empty-icon">✅</div><div class="empty-title">No upcoming bills</div></div>`;
+  allEl.innerHTML = all.length ? all.map(b=> billHTML(b, b.paid?'paid': b.dueDate<today?'overdue':'upcoming')).join('') :
+    `<div class="empty-state" style="padding:20px 0;"><div class="empty-icon">🔔</div><div class="empty-title">No bills yet</div><div class="empty-desc">Add your first bill reminder</div></div>`;
+}
+
+function billHTML(b, status){
+  const statusLabel = {overdue:'⚠️ Overdue',upcoming:'⏰ Due '+formatDate(b.dueDate),paid:'✅ Paid'};
+  return `<div class="bill-item">
+    <div class="bill-icon" style="background:${status==='overdue'?'#EA433520':status==='paid'?'#34A85320':'#1A73E820'}">${billTypeIcon(b.type)}</div>
+    <div class="bill-info">
+      <div class="bill-name">${escHtml(b.name)}</div>
+      <div class="bill-due ${status}">${statusLabel[status]||''}</div>
+    </div>
+    <div>
+      <div class="bill-amount">₹${fmt(b.amount)}</div>
+      <div class="bill-actions" style="justify-content:flex-end;margin-top:4px;">
+        <button class="bill-btn" onclick="toggleBillPaid('${b.id}')" title="${b.paid?'Mark Unpaid':'Mark Paid'}">${b.paid?'↩':'✓'}</button>
+        <button class="bill-btn" onclick="openAddBill('${b.id}')" title="Edit">✏️</button>
+        <button class="bill-btn" onclick="deleteBill('${b.id}')" title="Delete" style="color:var(--md-error);">🗑</button>
+      </div>
+    </div>
+  </div>`;
+}
+function billTypeIcon(type){
+  if(!type) return '📄';
+  if(type.includes('Electricity')) return '⚡';
+  if(type.includes('Mobile')) return '📱';
+  if(type.includes('Internet')) return '🌐';
+  if(type.includes('Rent')) return '🏠';
+  if(type.includes('EMI')) return '💰';
+  if(type.includes('Credit')) return '💳';
+  if(type.includes('Insurance')) return '🛡️';
+  return '📄';
+}
+function updateBillsBadge(){
+  const today = new Date().toISOString().split('T')[0];
+  const count = Object.values(STATE.bills).filter(b=> !b.paid && b.dueDate <= new Date(Date.now()+7*86400000).toISOString().split('T')[0]).length;
+  const badge = document.getElementById('bills-badge');
+  if(count > 0){ badge.textContent = count; badge.classList.remove('hidden'); }
+  else badge.classList.add('hidden');
+}
+
+// ── PROFILE ──
+function updateHeaderAvatar(user){
+  const el = document.getElementById('header-avatar');
+  if(user.photoURL){ el.innerHTML = `<img src="${user.photoURL}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />`; }
+  else { el.textContent = (user.displayName||user.email||'?')[0].toUpperCase(); }
+}
+
+function triggerAvatarUpload(){ document.getElementById('avatar-file').click(); }
+async function handleAvatarUpload(e){
+  const file = e.target.files[0]; if(!file) return;
+  try {
+    showToast('Uploading photo...');
+    const {sRef, uploadBytes, getDownloadURL, storage, updateProfile, auth} = window._fb;
+    const r = sRef(storage, `users/${STATE.user.uid}/avatar`);
+    await uploadBytes(r, file);
+    const url = await getDownloadURL(r);
+    await updateProfile(auth.currentUser, {photoURL: url});
+    document.getElementById('profile-avatar-hero').innerHTML = `<img src="${url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" />`;
+    updateHeaderAvatar(auth.currentUser);
+    showToast('Photo updated ✓','success');
+  } catch(e){ showToast('Upload failed','error'); }
+}
+
+function openEditProfile(){
+  document.getElementById('edit-name').value = STATE.user.displayName || '';
+  openSheet('sheet-profile');
+}
+async function saveProfile(){
+  const name = document.getElementById('edit-name').value.trim();
+  if(!name){ showToast('Enter your name','error'); return; }
+  const {updateProfile, auth} = window._fb;
+  await updateProfile(auth.currentUser, {displayName: name});
+  document.getElementById('profile-name-display').textContent = name;
+  document.getElementById('header-avatar').textContent = name[0].toUpperCase();
+  await saveToDb(`users/${STATE.user.uid}/profile/name`, name);
+  closeSheet('sheet-profile');
+  showToast('Profile updated ✓','success');
+}
+
+function openChangePassword(){ openSheet('sheet-password'); }
+async function changePassword(){
+  const curr = document.getElementById('curr-pass').value;
+  const newP = document.getElementById('new-pass').value;
+  if(!curr||!newP){ showToast('Fill all fields','error'); return; }
+  if(newP.length<6){ showToast('New password too short','error'); return; }
+  const {EmailAuthProvider, reauthenticateWithCredential, auth, updatePassword} = window._fb;
+  try {
+    const cred = EmailAuthProvider.credential(STATE.user.email, curr);
+    await reauthenticateWithCredential(auth.currentUser, cred);
+    await updatePassword(auth.currentUser, newP);
+    closeSheet('sheet-password');
+    showToast('Password updated ✓','success');
+  } catch(e){ showToast(friendlyAuthError(e.code),'error'); }
+}
+
+async function handleLogout(){
+  if(!confirm('Sign out of SpendiX?')) return;
+  const {signOut, auth} = window._fb;
+  await signOut(auth);
+  location.reload();
+}
+async function handleDeleteAccount(){
+  if(!confirm('Delete your account? This action cannot be undone and all data will be permanently lost.')) return;
+  const confirmText = prompt('Type DELETE to confirm:');
+  if(confirmText !== 'DELETE'){ showToast('Account deletion cancelled'); return; }
+  try {
+    await removeFromDb(`users/${STATE.user.uid}`);
+    const {deleteUser, auth} = window._fb;
+    await deleteUser(auth.currentUser);
+    showToast('Account deleted');
+    location.reload();
+  } catch(e){ showToast('Please re-login and try again','error'); }
+}
+
+// ── LANGUAGE ──
+function openLanguage(){ openSheet('sheet-lang'); }
+function setLanguage(lang, el){
+  STATE.lang = lang;
+  localStorage.setItem('spendix_lang', lang);
+  document.querySelectorAll('.lang-option').forEach(o=>o.classList.remove('selected'));
+  el.classList.add('selected');
+  updateLangLabel();
+  closeSheet('sheet-lang');
+  showToast('Language updated ✓','success');
+}
+function updateLangLabel(){
+  const labels = {en:'English',bn:'বাংলা (Bengali)',hi:'हिन्दी (Hindi)'};
+  const el = document.getElementById('current-lang-label');
+  if(el) el.textContent = labels[STATE.lang]||'English';
+  // Mark selected
+  document.querySelectorAll('.lang-option').forEach(o=>{
+    o.classList.toggle('selected', o.dataset.lang === STATE.lang);
+  });
+}
+
+// ── EXPORT / IMPORT ──
+function exportData(){
+  const data = { transactions: STATE.transactions, bills: STATE.bills, exportedAt: new Date().toISOString(), version:'1.0' };
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download='spendix-backup.json'; a.click();
+  URL.revokeObjectURL(url);
+  showToast('Data exported ✓','success');
+}
+function importData(){ document.getElementById('import-file').click(); }
+async function handleImport(e){
+  const file = e.target.files[0]; if(!file) return;
+  try {
+    const text = await file.text();
+    const data = JSON.parse(text);
+    if(data.transactions){
+      await saveToDb(`users/${STATE.user.uid}/transactions`, data.transactions);
+    }
+    if(data.bills){
+      await saveToDb(`users/${STATE.user.uid}/bills`, data.bills);
+    }
+    showToast('Data imported ✓','success');
+  } catch(e){ showToast('Invalid backup file','error'); }
+  e.target.value = '';
+}
+
+// ── SUB-PAGES ──
+function openSubpage(id){ document.getElementById('subpage-'+id).classList.add('open'); }
+function closeSubpage(id){ document.getElementById('subpage-'+id).classList.remove('open'); }
+
+// ── UTILS ──
+function fmt(n){ if(n===undefined||isNaN(n)) return '0'; return Number(n).toLocaleString('en-IN',{minimumFractionDigits:0,maximumFractionDigits:2}); }
+function escHtml(s){ return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function formatDate(d){
+  if(!d) return '';
+  const dt = new Date(d+'T00:00:00');
+  const today = new Date(); today.setHours(0,0,0,0);
+  const diff = Math.round((dt - today)/(1000*86400));
+  if(diff===0) return 'Today';
+  if(diff===1) return 'Tomorrow';
+  if(diff===-1) return 'Yesterday';
+  return dt.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});
+}
+
+// ── PWA INSTALL ──
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', e=>{ e.preventDefault(); deferredPrompt = e; });
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('sw.js').catch(()=>{});
+}
+
+// ── BACK BUTTON (Android) ──
+window.addEventListener('popstate', ()=>{
+  if(document.querySelector('.subpage.open')){
+    document.querySelectorAll('.subpage.open').forEach(s=> s.classList.remove('open'));
+  } else if(document.querySelector('.bottom-sheet.open')){
+    closeAllModals();
+  }
+});
+history.pushState({}, '');
+
+// ── SWIPE TO CLOSE SHEETS ──
+let touchY = 0;
+document.querySelectorAll('.bottom-sheet').forEach(sheet=>{
+  sheet.addEventListener('touchstart', e=>{ touchY = e.touches[0].clientY; }, {passive:true});
+  sheet.addEventListener('touchend', e=>{
+    if(e.changedTouches[0].clientY - touchY > 80) closeAllModals();
+  }, {passive:true});
+});
+</script>
+</body>
+</html>
