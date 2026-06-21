@@ -11,6 +11,8 @@
 <meta name="description" content="Spend Smart. Save More. Grow Better. - Smart Expense & Bill Tracker"/>
 <title>SpendiX – Smart Expense & Bill Tracker</title>
 <link rel="manifest" href="manifest.json"/>
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png"/>
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet"/>
@@ -31,7 +33,7 @@ const firebaseConfig = {
   storageBucket: "spendix-e3abf.firebasestorage.app",
   messagingSenderId: "394970088895",
   appId: "1:394970088895:web:0c170f2fba30b5382d4d0a"
-};q
+};
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
@@ -652,6 +654,18 @@ a{text-decoration:none;color:var(--md-primary);}
       </div>
       <div class="profile-section">
         <div class="card">
+          <div class="profile-item hidden" id="install-app-row" onclick="triggerInstallPrompt()">
+            <div class="profile-item-icon" style="background:#1A73E820;">📲</div>
+            <div class="profile-item-text">
+              <div class="profile-item-label">Install App</div>
+              <div class="profile-item-sub">Add SpendiX to your home screen</div>
+            </div>
+            <div class="profile-item-arrow">›</div>
+          </div>
+        </div>
+      </div>
+      <div class="profile-section">
+        <div class="card">
           <div class="profile-item" onclick="openEditProfile()">
             <div class="profile-item-icon" style="background:#1A73E820;">✏️</div>
             <div class="profile-item-text">
@@ -1157,10 +1171,14 @@ function finishOnboarding(){
 }
 
 // ── AUTH ──
+let _authResolved = false;
 function initAuth(){
-  window.addEventListener('firebaseReady', ()=>{
+  function bindAuth(){
+    if(_authResolved) return;
     const {onAuthStateChanged, auth} = window._fb;
     onAuthStateChanged(auth, user => {
+      _authResolved = true;
+      hideConnError();
       if (user) {
         STATE.user = user;
         showApp(user);
@@ -1168,14 +1186,31 @@ function initAuth(){
         showAuthScreen();
       }
     });
-  });
-  if (window._fb) {
-    const {onAuthStateChanged, auth} = window._fb;
-    onAuthStateChanged(auth, user => {
-      if (user) { STATE.user = user; showApp(user); }
-      else showAuthScreen();
-    });
   }
+  window.addEventListener('firebaseReady', bindAuth);
+  if (window._fb) bindAuth();
+
+  // Safety net: if Firebase never becomes ready (blocked CDN, offline,
+  // or any future init error), don't leave the user on a black screen.
+  setTimeout(()=>{
+    if(!_authResolved) showConnError();
+  }, 8000);
+}
+function showConnError(){
+  if(document.getElementById('conn-error')) return;
+  const div = document.createElement('div');
+  div.id = 'conn-error';
+  div.style = 'position:fixed;inset:0;z-index:10000;background:var(--md-bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:32px;text-align:center;';
+  div.innerHTML = `
+    <div style="font-size:48px;">📡</div>
+    <div style="font-family:var(--font-display);font-size:20px;font-weight:600;color:var(--md-on-surface);">Couldn't connect</div>
+    <div style="font-size:14px;color:var(--md-on-surface-variant);max-width:280px;">Check your internet connection and try again.</div>
+    <button onclick="location.reload()" style="padding:12px 28px;background:var(--md-primary);color:#fff;border-radius:12px;font-size:15px;font-weight:600;">Retry</button>`;
+  document.body.appendChild(div);
+}
+function hideConnError(){
+  const el = document.getElementById('conn-error');
+  if(el) el.remove();
 }
 
 function showAuthScreen(){
@@ -1922,9 +1957,29 @@ function formatDate(d){
 
 // ── PWA INSTALL ──
 let deferredPrompt;
-window.addEventListener('beforeinstallprompt', e=>{ e.preventDefault(); deferredPrompt = e; });
+window.addEventListener('beforeinstallprompt', e=>{
+  e.preventDefault();
+  deferredPrompt = e;
+  const row = document.getElementById('install-app-row');
+  if(row) row.classList.remove('hidden');
+});
+window.addEventListener('appinstalled', ()=>{
+  deferredPrompt = null;
+  const row = document.getElementById('install-app-row');
+  if(row) row.classList.add('hidden');
+  showToast('SpendiX installed ✓','success');
+});
+async function triggerInstallPrompt(){
+  if(!deferredPrompt){ showToast('App is already installed or not installable yet'); return; }
+  deferredPrompt.prompt();
+  const { outcome } = await deferredPrompt.userChoice;
+  if(outcome !== 'accepted') showToast('Install dismissed');
+  deferredPrompt = null;
+}
 if('serviceWorker' in navigator){
-  navigator.serviceWorker.register('sw.js').catch(()=>{});
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('sw.js').catch(err=>console.error('SW registration failed:', err));
+  });
 }
 
 // ── BACK BUTTON (Android) ──
