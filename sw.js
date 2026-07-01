@@ -1,5 +1,5 @@
 // SpendiX service worker — app shell caching for offline support & PWA installability.
-const CACHE_NAME = 'spendix-cache-v2';
+const CACHE_NAME = 'spendix-cache-v3';
 const APP_SHELL = [
   './',
   './index.html',
